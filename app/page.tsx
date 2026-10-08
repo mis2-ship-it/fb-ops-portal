@@ -22,82 +22,103 @@ export default function Home() {
   }, [platform, timeFilter]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-neutral-100 p-6 md:p-10 font-sans">
+    <div style={{ minHeight: '100vh', backgroundColor: '#0b0f17', color: '#f3f4f6', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '32px' }}>
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-neutral-800 gap-4">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1f293d', paddingBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <div className="flex items-center gap-3">
-            <span className="bg-amber-400 text-black font-extrabold text-xs px-2.5 py-1 rounded tracking-wider">
-              COCO ONLY
-            </span>
-            <h1 className="text-2xl font-bold tracking-tight">Frozen Bottle Operations Hub</h1>
-          </div>
-          <p className="text-xs text-neutral-400 mt-1">Multi-channel performance & rating intelligence</p>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#ffffff', letterSpacing: '-0.02em' }}>
+            Frozen Bottle Operations Hub
+          </h1>
+          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#94a3b8' }}>
+            Multi-channel performance & store operational intelligence
+          </p>
         </div>
-        <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 px-3 py-1.5 rounded-lg text-xs">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Live Outlet Stream</span>
-        </div>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 my-6">
-        <div className="bg-neutral-900/80 border border-neutral-800 p-4 rounded-xl">
-          <p className="text-xs text-neutral-400">Total Net Sales</p>
-          <p className="text-xl font-bold mt-1 text-white">₹ 14,82,400</p>
-          <span className="text-[11px] text-neutral-500">POS + Aggregators</span>
-        </div>
-        <div className="bg-neutral-900/80 border border-neutral-800 p-4 rounded-xl">
-          <p className="text-xs text-neutral-400">Avg Rating (All)</p>
-          <p className="text-xl font-bold mt-1 text-amber-400">4.25 ★</p>
-          <span className="text-[11px] text-emerald-400">Google + Swiggy + Zomato</span>
-        </div>
-        <div className="bg-neutral-900/80 border border-neutral-800 p-4 rounded-xl">
-          <p className="text-xs text-neutral-400">Avg KPT</p>
-          <p className="text-xl font-bold mt-1 text-white">6.4 <span className="text-xs font-normal text-neutral-400">mins</span></p>
-          <span className="text-[11px] text-emerald-400">&lt; 7m SLA</span>
-        </div>
-        <div className="bg-neutral-900/80 border border-neutral-800 p-4 rounded-xl">
-          <p className="text-xs text-neutral-400">Avg O2D</p>
-          <p className="text-xl font-bold mt-1 text-white">22.8 <span className="text-xs font-normal text-neutral-400">mins</span></p>
-          <span className="text-[11px] text-neutral-400">Doorstep delivery</span>
-        </div>
-        <div className="bg-neutral-900/80 border border-neutral-800 p-4 rounded-xl col-span-2 md:col-span-1">
-          <p className="text-xs text-neutral-400">Food Cost %</p>
-          <p className="text-xl font-bold mt-1 text-white">27.6%</p>
-          <span className="text-[11px] text-emerald-400">-0.4% vs Budget</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#131c2e', border: '1px solid #23314d', padding: '6px 14px', borderRadius: '20px', fontSize: '12px' }}>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
+          <span style={{ color: '#cbd5e1' }}>Live Feed Active</span>
         </div>
       </div>
 
-      {/* Ratings Section */}
-      <div className="bg-[#121212] border border-neutral-800 rounded-2xl p-6 shadow-xl mt-8">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-6 border-b border-neutral-800 gap-4">
+      {/* Top Operations KPI Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', margin: '24px 0' }}>
+        <div style={{ backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '18px' }}>
+          <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Net Sales</span>
+          <div style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', margin: '6px 0 2px' }}>₹ 14,82,400</div>
+          <span style={{ fontSize: '11px', color: '#64748b' }}>POS + Aggregators</span>
+        </div>
+
+        <div style={{ backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '18px' }}>
+          <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg Rating</span>
+          <div style={{ fontSize: '22px', fontWeight: 700, color: '#f59e0b', margin: '6px 0 2px' }}>4.25 ★</div>
+          <span style={{ fontSize: '11px', color: '#10b981' }}>Across all stores</span>
+        </div>
+
+        <div style={{ backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '18px' }}>
+          <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg KPT</span>
+          <div style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', margin: '6px 0 2px' }}>6.4 mins</div>
+          <span style={{ fontSize: '11px', color: '#10b981' }}>&lt; 7m SLA Target</span>
+        </div>
+
+        <div style={{ backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '18px' }}>
+          <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg O2D</span>
+          <div style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', margin: '6px 0 2px' }}>22.8 mins</div>
+          <span style={{ fontSize: '11px', color: '#94a3b8' }}>Doorstep delivery</span>
+        </div>
+
+        <div style={{ backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '18px' }}>
+          <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Food Cost</span>
+          <div style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', margin: '6px 0 2px' }}>27.6%</div>
+          <span style={{ fontSize: '11px', color: '#10b981' }}>-0.4% vs Budget</span>
+        </div>
+      </div>
+
+      {/* Ratings Intelligence Container */}
+      <div style={{ backgroundColor: '#101726', border: '1px solid #1f293d', borderRadius: '16px', padding: '24px', marginTop: '28px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1f293d', paddingBottom: '18px', flexWrap: 'wrap', gap: '16px' }}>
           <div>
-            <h2 className="text-lg font-bold text-white">Customer Ratings & Reviews</h2>
-            <p className="text-xs text-neutral-400 mt-0.5">Filter by platform and evaluation window</p>
+            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#ffffff' }}>Customer Ratings & Feedback</h2>
+            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>Filter live Google Sheets feed by platform and period</p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex bg-neutral-900 p-1 rounded-xl border border-neutral-800">
+
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            {/* Platform Selector */}
+            <div style={{ display: 'flex', backgroundColor: '#0b0f17', padding: '4px', borderRadius: '10px', border: '1px solid #1f293d' }}>
               {(['Google', 'Swiggy', 'Zomato'] as Platform[]).map((p) => (
                 <button
                   key={p}
                   onClick={() => setPlatform(p)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-                    platform === p ? 'bg-amber-400 text-black shadow-md' : 'text-neutral-400 hover:text-white'
-                  }`}
+                  style={{
+                    backgroundColor: platform === p ? '#f59e0b' : 'transparent',
+                    color: platform === p ? '#000000' : '#94a3b8',
+                    border: 'none',
+                    borderRadius: '7px',
+                    padding: '6px 14px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
                 >
                   {p}
                 </button>
               ))}
             </div>
-            <div className="flex bg-neutral-900 p-1 rounded-xl border border-neutral-800 overflow-x-auto">
+
+            {/* Time Filter Selector */}
+            <div style={{ display: 'flex', backgroundColor: '#0b0f17', padding: '4px', borderRadius: '10px', border: '1px solid #1f293d' }}>
               {(['Yesterday', 'LW', 'L2W', 'MTD', 'LMTD', 'Last 30 Days'] as TimePeriod[]).map((t) => (
                 <button
                   key={t}
                   onClick={() => setTimeFilter(t)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
-                    timeFilter === t ? 'bg-neutral-700 text-white font-semibold' : 'text-neutral-400 hover:text-neutral-200'
-                  }`}
+                  style={{
+                    backgroundColor: timeFilter === t ? '#334155' : 'transparent',
+                    color: timeFilter === t ? '#ffffff' : '#94a3b8',
+                    border: 'none',
+                    borderRadius: '7px',
+                    padding: '6px 12px',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                  }}
                 >
                   {t}
                 </button>
@@ -106,64 +127,81 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Rating KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-6">
-          <div className="bg-neutral-900/60 border border-neutral-800 p-5 rounded-xl">
-            <span className="text-xs font-medium text-neutral-400 uppercase tracking-wider">{platform} Rating</span>
-            <div className="text-3xl font-extrabold text-amber-400 mt-2">
+        {/* Dynamic Metric Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', margin: '24px 0' }}>
+          <div style={{ backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '20px' }}>
+            <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{platform} Rating</span>
+            <div style={{ fontSize: '32px', fontWeight: 800, color: '#f59e0b', margin: '8px 0 4px' }}>
               {loading ? '...' : (data?.overallRating || '4.20')} ★
             </div>
-            <p className="text-xs text-neutral-500 mt-1">COCO Outlets ({timeFilter})</p>
+            <span style={{ fontSize: '12px', color: '#64748b' }}>Selected window: {timeFilter}</span>
           </div>
 
-          <div className="bg-neutral-900/60 border border-neutral-800 p-5 rounded-xl">
-            <span className="text-xs font-medium text-neutral-400 uppercase tracking-wider">Rated Orders</span>
-            <div className="text-3xl font-extrabold text-white mt-2">
+          <div style={{ backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '20px' }}>
+            <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Rated Orders</span>
+            <div style={{ fontSize: '32px', fontWeight: 800, color: '#ffffff', margin: '8px 0 4px' }}>
               {loading ? '...' : (data?.ratedOrders?.toLocaleString() || '0')}
             </div>
-            <p className="text-xs text-neutral-500 mt-1">Verified orders</p>
+            <span style={{ fontSize: '12px', color: '#64748b' }}>Verified rating entries</span>
           </div>
 
-          <div className="bg-neutral-900/60 border border-neutral-800 p-5 rounded-xl">
-            <span className="text-xs font-medium text-neutral-400 uppercase tracking-wider">Customer Feedback</span>
-            <div className="text-3xl font-extrabold text-white mt-2">
+          <div style={{ backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '20px' }}>
+            <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Comments Captured</span>
+            <div style={{ fontSize: '32px', fontWeight: 800, color: '#ffffff', margin: '8px 0 4px' }}>
               {loading ? '...' : (data?.recentReviews?.length || '0')}
             </div>
-            <p className="text-xs text-neutral-500 mt-1">Written comments</p>
+            <span style={{ fontSize: '12px', color: '#64748b' }}>Written customer reviews</span>
           </div>
         </div>
 
-        {/* Review Stream */}
-        <div className="mt-6">
-          <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">
-            Recent {platform} Comments ({timeFilter})
+        {/* Live Reviews Feed */}
+        <div style={{ marginTop: '24px' }}>
+          <h3 style={{ fontSize: '13px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 14px' }}>
+            Recent {platform} Reviews ({timeFilter})
           </h3>
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {loading ? (
-              <p className="text-xs text-neutral-500">Loading feed from Google Sheets...</p>
+              <div style={{ padding: '16px', color: '#64748b', fontSize: '13px' }}>Syncing data from Google Sheets...</div>
             ) : data?.recentReviews?.length > 0 ? (
               data.recentReviews.map((rev: any, idx: number) => (
-                <div key={idx} className="bg-neutral-900/40 border border-neutral-800 p-4 rounded-xl flex justify-between items-center">
+                <div
+                  key={idx}
+                  style={{
+                    backgroundColor: '#131c2e',
+                    border: '1px solid #1f293d',
+                    borderRadius: '10px',
+                    padding: '14px 18px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '16px',
+                  }}
+                >
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-sm text-white">{rev.store}</span>
-                      <span className="text-xs text-neutral-500">{rev.date}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                      <span style={{ fontWeight: 600, fontSize: '14px', color: '#ffffff' }}>{rev.store}</span>
+                      <span style={{ fontSize: '11px', color: '#64748b' }}>{rev.date}</span>
                     </div>
-                    <p className="text-xs text-neutral-300">"{rev.comment}"</p>
+                    <p style={{ margin: 0, fontSize: '13px', color: '#cbd5e1' }}>"{rev.comment}"</p>
                   </div>
                   <span
-                    className={`text-xs font-bold px-2.5 py-1 rounded shrink-0 ${
-                      rev.rating >= 4
-                        ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                        : 'bg-red-950 text-red-300 border border-red-800'
-                    }`}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      backgroundColor: rev.rating >= 4 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                      color: rev.rating >= 4 ? '#34d399' : '#f87171',
+                      border: rev.rating >= 4 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
+                      whiteSpace: 'nowrap',
+                    }}
                   >
                     {rev.rating} ★
                   </span>
                 </div>
               ))
             ) : (
-              <p className="text-xs text-neutral-500">No written reviews in this window.</p>
+              <div style={{ padding: '16px', color: '#64748b', fontSize: '13px' }}>No written customer feedback recorded for this period.</div>
             )}
           </div>
         </div>
