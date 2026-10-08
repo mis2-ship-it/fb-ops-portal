@@ -144,7 +144,7 @@ export default function Home() {
 
           <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '20px' }}>
             <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Rated Orders ({platform === 'swiggy' ? 'Col O = 1' : 'Col M = 1'})
+              Rated Orders ({platform === 'Swiggy' ? 'Col O = 1' : 'Col M = 1'})
             </span>
             <div style={{ fontSize: '32px', fontWeight: 800, color: '#ffffff', margin: '8px 0 4px' }}>
               {loading ? '...' : (data?.ratedOrders?.toLocaleString() || '0')}
