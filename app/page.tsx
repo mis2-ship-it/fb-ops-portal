@@ -22,15 +22,16 @@ export default function Home() {
   }, [platform, timeFilter]);
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#090d16', color: '#f1f5f9', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '32px' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#090d16', color: '#f8fafc', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '28px', boxSizing: 'border-box' }}>
+      
       {/* Top Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1e293b', paddingBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#ffffff' }}>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em' }}>
             Frozen Bottle Operations Hub
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#94a3b8' }}>
-            Multi-channel performance & rating intelligence
+            Multi-channel store performance & customer feedback engine
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#111827', border: '1px solid #1f2937', padding: '6px 14px', borderRadius: '20px', fontSize: '12px' }}>
@@ -39,15 +40,15 @@ export default function Home() {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', margin: '24px 0' }}>
-        <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '18px' }}>
+      {/* Top 5 Operations Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', margin: '24px 0' }}>
+        <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '16px' }}>
           <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Net Sales</span>
           <div style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', margin: '6px 0 2px' }}>₹ 14,82,400</div>
           <span style={{ fontSize: '11px', color: '#64748b' }}>POS + Aggregators</span>
         </div>
 
-        <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '18px' }}>
+        <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '16px' }}>
           <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg Rating</span>
           <div style={{ fontSize: '22px', fontWeight: 700, color: '#f59e0b', margin: '6px 0 2px' }}>
             {data?.overallRating || '3.89'} ★
@@ -55,34 +56,37 @@ export default function Home() {
           <span style={{ fontSize: '11px', color: '#10b981' }}>{platform} Live</span>
         </div>
 
-        <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '18px' }}>
+        <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '16px' }}>
           <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg KPT</span>
           <div style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', margin: '6px 0 2px' }}>6.4 mins</div>
-          <span style={{ fontSize: '11px', color: '#10b981' }}>&lt; 7m SLA</span>
+          <span style={{ fontSize: '11px', color: '#10b981' }}>&lt; 7m SLA Target</span>
         </div>
 
-        <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '18px' }}>
+        <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '16px' }}>
           <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg O2D</span>
           <div style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', margin: '6px 0 2px' }}>22.8 mins</div>
           <span style={{ fontSize: '11px', color: '#64748b' }}>Doorstep delivery</span>
         </div>
 
-        <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '18px' }}>
+        <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '16px' }}>
           <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Food Cost %</span>
           <div style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', margin: '6px 0 2px' }}>27.6%</div>
           <span style={{ fontSize: '11px', color: '#10b981' }}>-0.4% vs Budget</span>
         </div>
       </div>
 
-      {/* Customer Ratings Section */}
-      <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '24px', marginTop: '28px' }}>
+      {/* Ratings Intelligence Container */}
+      <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '24px', marginTop: '24px' }}>
+        
+        {/* Slicers Row */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1e293b', paddingBottom: '18px', flexWrap: 'wrap', gap: '16px' }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#ffffff' }}>Customer Ratings & Feedback</h2>
+            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#ffffff' }}>Customer Ratings & Feedback</h2>
             <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>Filter live Google Sheets feed by platform and period</p>
           </div>
 
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            {/* Platform Slicer */}
             <div style={{ display: 'flex', backgroundColor: '#090d16', padding: '4px', borderRadius: '10px', border: '1px solid #1e293b' }}>
               {(['Google', 'Swiggy', 'Zomato'] as Platform[]).map((p) => (
                 <button
@@ -104,6 +108,7 @@ export default function Home() {
               ))}
             </div>
 
+            {/* Time Filter Slicer */}
             <div style={{ display: 'flex', backgroundColor: '#090d16', padding: '4px', borderRadius: '10px', border: '1px solid #1e293b' }}>
               {(['Yesterday', 'LW', 'L2W', 'MTD', 'LMTD', 'Last 30 Days'] as TimePeriod[]).map((t) => (
                 <button
@@ -127,7 +132,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 3 Metric Tiles */}
+        {/* 3 Large KPI Tiles */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', margin: '24px 0' }}>
           <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '20px' }}>
             <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{platform} Rating</span>
@@ -152,10 +157,63 @@ export default function Home() {
             <div style={{ fontSize: '32px', fontWeight: 800, color: '#ffffff', margin: '8px 0 4px' }}>
               {loading ? '...' : (data?.recentReviews?.length || '0')}
             </div>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>Written customer reviews</span>
+            <span style={{ fontSize: '12px', color: '#64748b' }}>Customer comments with ratings</span>
           </div>
         </div>
 
         {/* Live Comments Feed */}
         <div style={{ marginTop: '24px' }}>
           <h3 style={{ fontSize: '13px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 14px' }}>
+            Recent {platform} Comments ({timeFilter})
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {loading ? (
+              <div style={{ padding: '16px', color: '#64748b', fontSize: '13px' }}>Syncing data from Google Sheets...</div>
+            ) : data?.recentReviews?.length > 0 ? (
+              data.recentReviews.map((rev: any, idx: number) => (
+                <div
+                  key={idx}
+                  style={{
+                    backgroundColor: '#111827',
+                    border: '1px solid #1f2937',
+                    borderRadius: '10px',
+                    padding: '14px 18px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '16px',
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                      <span style={{ fontWeight: 600, fontSize: '14px', color: '#ffffff' }}>{rev.store}</span>
+                      <span style={{ fontSize: '11px', color: '#64748b' }}>{rev.date}</span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '13px', color: '#cbd5e1' }}>"{rev.comment}"</p>
+                  </div>
+                  <span
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      backgroundColor: rev.rating >= 4 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                      color: rev.rating >= 4 ? '#34d399' : '#f87171',
+                      border: rev.rating >= 4 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {rev.rating} ★
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div style={{ padding: '16px', color: '#64748b', fontSize: '13px' }}>No customer comments recorded for this period.</div>
+            )}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
