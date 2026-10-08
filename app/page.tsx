@@ -2,208 +2,219 @@
 import React, { useState, useEffect } from 'react';
 
 type Platform = 'Google' | 'Swiggy' | 'Zomato';
-type TimePeriod = 'Yesterday' | 'LW' | 'L2W' | 'MTD' | 'LMTD' | 'Last 30 Days';
 
 export default function Home() {
-  const [platform, setPlatform] = useState<Platform>('Google');
-  const [timeFilter, setTimeFilter] = useState<TimePeriod>('MTD');
+  const [platform, setPlatform] = useState<Platform>('Zomato');
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/ratings?platform=${platform.toLowerCase()}&period=${timeFilter.toLowerCase()}`)
+    fetch(`/api/ratings?platform=${platform.toLowerCase()}`)
       .then((res) => res.json())
       .then((json) => {
         setData(json);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [platform, timeFilter]);
+  }, [platform]);
+
+  const pLabel = data?.previousLabel || 'Sep-26';
+  const cLabel = data?.currentLabel || 'Oct-26';
+
+  const renderDataRow = (row: any, isSubRow = false) => {
+    const isNeg = parseFloat(row.ratingDiff) < 0;
+    const isOrderPos = parseFloat(row.ratedOrdersPct) >= 0;
+    const isIssuePos = parseFloat(row.issueOrdersPct) <= 0; // Negative issues = positive outcome
+
+    return (
+      <tr
+        key={row.name}
+        style={{
+          borderBottom: '1px solid #1f293d',
+          backgroundColor: isSubRow ? '#0e1524' : '#131c2e',
+          fontSize: '11px',
+          fontWeight: isSubRow ? 400 : 600,
+        }}
+      >
+        <td style={{ padding: '8px 12px', color: isSubRow ? '#94a3b8' : '#ffffff', paddingLeft: isSubRow ? '28px' : '12px' }}>
+          {row.name}
+        </td>
+
+        {/* Ratings Comparison */}
+        <td style={{ padding: '8px 6px', textAlign: 'center', backgroundColor: '#1e3a8a', color: '#93c5fd', fontWeight: 700 }}>{row.prevRating}</td>
+        <td style={{ padding: '8px 6px', textAlign: 'center', backgroundColor: '#2563eb', color: '#ffffff', fontWeight: 700 }}>{row.currRating}</td>
+        <td style={{ padding: '8px 6px', textAlign: 'center', color: isNeg ? '#f87171' : '#34d399', fontWeight: 700, backgroundColor: isNeg ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)' }}>
+          {row.ratingDiff}
+        </td>
+
+        {/* Previous Star Share */}
+        {[1, 2, 3, 4, 5].map((s) => (
+          <td key={`p-${s}`} style={{ padding: '8px 4px', textAlign: 'center', color: '#cbd5e1', backgroundColor: '#1a102f' }}>
+            {row.prevStars[s]}
+          </td>
+        ))}
+
+        {/* Current Star Share */}
+        {[1, 2, 3, 4, 5].map((s) => (
+          <td key={`c-${s}`} style={{ padding: '8px 4px', textAlign: 'center', color: '#f3e8ff', backgroundColor: '#2e1065', fontWeight: s === 5 ? 700 : 400 }}>
+            {row.currStars[s]}
+          </td>
+        ))}
+
+        {/* Rated Orders (Col O / M == 1) */}
+        <td style={{ padding: '8px 6px', textAlign: 'center', color: '#cbd5e1' }}>{row.prevRatedOrders?.toLocaleString()}</td>
+        <td style={{ padding: '8px 6px', textAlign: 'center', color: '#ffffff', fontWeight: 700 }}>{row.currRatedOrders?.toLocaleString()}</td>
+        <td style={{ padding: '8px 6px', textAlign: 'center', color: isOrderPos ? '#34d399' : '#f87171', fontWeight: 700 }}>
+          {row.ratedOrdersPct}
+        </td>
+
+        {/* Rated Issues Orders */}
+        <td style={{ padding: '8px 6px', textAlign: 'center', color: '#cbd5e1' }}>{row.prevIssueOrders?.toLocaleString()}</td>
+        <td style={{ padding: '8px 6px', textAlign: 'center', color: '#ffffff', fontWeight: 700 }}>{row.currIssueOrders?.toLocaleString()}</td>
+        <td style={{ padding: '8px 6px', textAlign: 'center', color: isIssuePos ? '#34d399' : '#f87171', fontWeight: 700, backgroundColor: isIssuePos ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}>
+          {row.issueOrdersPct}
+        </td>
+      </tr>
+    );
+  };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0b0f17', color: '#f3f4f6', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '32px' }}>
-      {/* Top Header without COCO ONLY */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1f293d', paddingBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#070b12', color: '#f3f4f6', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '24px' }}>
+      {/* Header & Platform Slicer */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1f293d', paddingBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#ffffff', letterSpacing: '-0.02em' }}>
-            Frozen Bottle Operations Hub
-          </h1>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#94a3b8' }}>
-            Multi-channel performance & store operational intelligence
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#ffffff' }}>Frozen Bottle Operations Hub</h1>
+          <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>
+            Store Performance Comparison • Previous ({pLabel}) vs Current ({cLabel})
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#131c2e', border: '1px solid #23314d', padding: '6px 14px', borderRadius: '20px', fontSize: '12px' }}>
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
-          <span style={{ color: '#cbd5e1' }}>Live Feed Active</span>
+
+        {/* Platform Slicer */}
+        <div style={{ display: 'flex', backgroundColor: '#0f172a', padding: '4px', borderRadius: '10px', border: '1px solid #1f293d' }}>
+          {(['Google', 'Swiggy', 'Zomato'] as Platform[]).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPlatform(p)}
+              style={{
+                backgroundColor: platform === p ? '#ea580c' : 'transparent',
+                color: platform === p ? '#ffffff' : '#94a3b8',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '6px 16px',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              {p}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Operations Metric Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', margin: '24px 0' }}>
-        <div style={{ backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '18px' }}>
-          <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Net Sales</span>
-          <div style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', margin: '6px 0 2px' }}>₹ 14,82,400</div>
-          <span style={{ fontSize: '11px', color: '#64748b' }}>POS + Aggregators</span>
-        </div>
+      {loading ? (
+        <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Processing COCO store matrices from Google Sheets...</div>
+      ) : (
+        <div style={{ marginTop: '20px', overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #1f293d' }}>
+            <thead>
+              {/* Main Header Blocks */}
+              <tr style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <th style={{ backgroundColor: '#0f172a', color: '#94a3b8', padding: '10px', border: '1px solid #1f293d' }}>Dimension</th>
+                <th colSpan={3} style={{ backgroundColor: '#ea580c', color: '#ffffff', padding: '8px', border: '1px solid #1f293d' }}>
+                  {platform} Ratings
+                </th>
+                <th colSpan={5} style={{ backgroundColor: '#4c1d95', color: '#ffffff', padding: '8px', border: '1px solid #1f293d' }}>
+                  {pLabel} Stars (1-5)
+                </th>
+                <th colSpan={5} style={{ backgroundColor: '#581c87', color: '#ffffff', padding: '8px', border: '1px solid #1f293d' }}>
+                  {cLabel} Stars (1-5)
+                </th>
+                <th colSpan={3} style={{ backgroundColor: '#9a3412', color: '#ffffff', padding: '8px', border: '1px solid #1f293d' }}>
+                  Rated Orders ({platform === 'swiggy' ? 'Col O = 1' : 'Col M = 1'})
+                </th>
+                <th colSpan={3} style={{ backgroundColor: '#ca8a04', color: '#ffffff', padding: '8px', border: '1px solid #1f293d' }}>
+                  Rated Issues Orders
+                </th>
+              </tr>
 
-        <div style={{ backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '18px' }}>
-          <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg Rating</span>
-          <div style={{ fontSize: '22px', fontWeight: 700, color: '#f59e0b', margin: '6px 0 2px' }}>4.25 ★</div>
-          <span style={{ fontSize: '11px', color: '#10b981' }}>Across all stores</span>
-        </div>
+              {/* Sub Columns */}
+              <tr style={{ backgroundColor: '#131c2e', color: '#cbd5e1', fontSize: '10px', borderBottom: '2px solid #334155' }}>
+                <th style={{ padding: '6px 12px', textAlign: 'left' }}>Brand / Region</th>
+                <th style={{ padding: '6px', textAlign: 'center' }}>{pLabel}</th>
+                <th style={{ padding: '6px', textAlign: 'center' }}>{cLabel}</th>
+                <th style={{ padding: '6px', textAlign: 'center' }}>%</th>
 
-        <div style={{ backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '18px' }}>
-          <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg KPT</span>
-          <div style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', margin: '6px 0 2px' }}>6.4 mins</div>
-          <span style={{ fontSize: '11px', color: '#10b981' }}>&lt; 7m SLA Target</span>
-        </div>
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <th key={`ps-${s}`} style={{ padding: '6px 4px', textAlign: 'center' }}>{s}</th>
+                ))}
 
-        <div style={{ backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '18px' }}>
-          <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg O2D</span>
-          <div style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', margin: '6px 0 2px' }}>22.8 mins</div>
-          <span style={{ fontSize: '11px', color: '#94a3b8' }}>Doorstep delivery</span>
-        </div>
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <th key={`cs-${s}`} style={{ padding: '6px 4px', textAlign: 'center' }}>{s}</th>
+                ))}
 
-        <div style={{ backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '18px' }}>
-          <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Food Cost</span>
-          <div style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', margin: '6px 0 2px' }}>27.6%</div>
-          <span style={{ fontSize: '11px', color: '#10b981' }}>-0.4% vs Budget</span>
-        </div>
-      </div>
+                <th style={{ padding: '6px', textAlign: 'center' }}>{pLabel}</th>
+                <th style={{ padding: '6px', textAlign: 'center' }}>{cLabel}</th>
+                <th style={{ padding: '6px', textAlign: 'center' }}>%</th>
 
-      {/* Ratings Intelligence Container */}
-      <div style={{ backgroundColor: '#101726', border: '1px solid #1f293d', borderRadius: '16px', padding: '24px', marginTop: '28px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1f293d', paddingBottom: '18px', flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#ffffff' }}>Customer Ratings & Feedback</h2>
-            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>Filter live Google Sheets feed by platform and period</p>
-          </div>
+                <th style={{ padding: '6px', textAlign: 'center' }}>{pLabel}</th>
+                <th style={{ padding: '6px', textAlign: 'center' }}>{cLabel}</th>
+                <th style={{ padding: '6px', textAlign: 'center' }}>%</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Overall Average */}
+              {data?.average && renderDataRow(data.average)}
 
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', backgroundColor: '#0b0f17', padding: '4px', borderRadius: '10px', border: '1px solid #1f293d' }}>
-              {(['Google', 'Swiggy', 'Zomato'] as Platform[]).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPlatform(p)}
-                  style={{
-                    backgroundColor: platform === p ? '#f59e0b' : 'transparent',
-                    color: platform === p ? '#000000' : '#94a3b8',
-                    border: 'none',
-                    borderRadius: '7px',
-                    padding: '6px 14px',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {p}
-                </button>
+              {/* Brand Breakdown */}
+              <tr style={{ backgroundColor: '#090d16' }}>
+                <td colSpan={20} style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase' }}>
+                  Brand Breakdown
+                </td>
+              </tr>
+              {data?.brands?.map((b: any) => renderDataRow(b))}
+
+              {/* Region & Brand Hierarchy */}
+              <tr style={{ backgroundColor: '#090d16' }}>
+                <td colSpan={20} style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase' }}>
+                  Region Breakdown
+                </td>
+              </tr>
+              {data?.regions?.map((rGroup: any) => (
+                <React.Fragment key={rGroup.region.name}>
+                  {renderDataRow(rGroup.region)}
+                  {rGroup.brandBreakdown?.map((b: any) => renderDataRow(b, true))}
+                </React.Fragment>
               ))}
-            </div>
+            </tbody>
+          </table>
 
-            <div style={{ display: 'flex', backgroundColor: '#0b0f17', padding: '4px', borderRadius: '10px', border: '1px solid #1f293d' }}>
-              {(['Yesterday', 'LW', 'L2W', 'MTD', 'LMTD', 'Last 30 Days'] as TimePeriod[]).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTimeFilter(t)}
-                  style={{
-                    backgroundColor: timeFilter === t ? '#334155' : 'transparent',
-                    color: timeFilter === t ? '#ffffff' : '#94a3b8',
-                    border: 'none',
-                    borderRadius: '7px',
-                    padding: '6px 12px',
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Dynamic Metric Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', margin: '24px 0' }}>
-          <div style={{ backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '20px' }}>
-            <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{platform} Rating</span>
-            <div style={{ fontSize: '32px', fontWeight: 800, color: '#f59e0b', margin: '8px 0 4px' }}>
-              {loading ? '...' : (data?.overallRating || '4.20')} ★
-            </div>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>Selected window: {timeFilter}</span>
-          </div>
-
-          <div style={{ backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '20px' }}>
-            <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Rated Orders</span>
-            <div style={{ fontSize: '32px', fontWeight: 800, color: '#ffffff', margin: '8px 0 4px' }}>
-              {loading ? '...' : (data?.ratedOrders?.toLocaleString() || '0')}
-            </div>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>Verified rating entries</span>
-          </div>
-
-          <div style={{ backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '20px' }}>
-            <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Comments Captured</span>
-            <div style={{ fontSize: '32px', fontWeight: 800, color: '#ffffff', margin: '8px 0 4px' }}>
-              {loading ? '...' : (data?.recentReviews?.length || '0')}
-            </div>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>Written customer reviews</span>
-          </div>
-        </div>
-
-        {/* Reviews Feed */}
-        <div style={{ marginTop: '24px' }}>
-          <h3 style={{ fontSize: '13px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 14px' }}>
-            Recent {platform} Reviews ({timeFilter})
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {loading ? (
-              <div style={{ padding: '16px', color: '#64748b', fontSize: '13px' }}>Syncing data from Google Sheets...</div>
-            ) : data?.recentReviews?.length > 0 ? (
-              data.recentReviews.map((rev: any, idx: number) => (
-                <div
-                  key={idx}
-                  style={{
-                    backgroundColor: '#131c2e',
-                    border: '1px solid #1f293d',
-                    borderRadius: '10px',
-                    padding: '14px 18px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: '16px',
-                  }}
-                >
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                      <span style={{ fontWeight: 600, fontSize: '14px', color: '#ffffff' }}>{rev.store}</span>
-                      <span style={{ fontSize: '11px', color: '#64748b' }}>{rev.date}</span>
+          {/* Category-Level Issue Orders Section */}
+          {data?.categoryIssues?.length > 0 && (
+            <div style={{ marginTop: '32px', backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '20px' }}>
+              <h3 style={{ margin: '0 0 14px', fontSize: '13px', color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Category-Wise Issue Analysis (Order Count Column)
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+                {data.categoryIssues.map((cat: any) => {
+                  const diff = cat.prev > 0 ? (((cat.curr - cat.prev) / cat.prev) * 100).toFixed(1) : '0.0';
+                  return (
+                    <div key={cat.category} style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '8px', padding: '12px' }}>
+                      <div style={{ fontWeight: 600, fontSize: '12px', color: '#ffffff' }}>{cat.category}</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px', fontSize: '11px' }}>
+                        <span style={{ color: '#94a3b8' }}>{pLabel}: <strong style={{ color: '#ffffff' }}>{cat.prev}</strong></span>
+                        <span style={{ color: '#94a3b8' }}>{cLabel}: <strong style={{ color: '#ffffff' }}>{cat.curr}</strong></span>
+                        <span style={{ color: parseFloat(diff) <= 0 ? '#34d399' : '#f87171', fontWeight: 700 }}>{diff}%</span>
+                      </div>
                     </div>
-                    <p style={{ margin: 0, fontSize: '13px', color: '#cbd5e1' }}>"{rev.comment}"</p>
-                  </div>
-                  <span
-                    style={{
-                      padding: '4px 10px',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      backgroundColor: rev.rating >= 4 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                      color: rev.rating >= 4 ? '#34d399' : '#f87171',
-                      border: rev.rating >= 4 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {rev.rating} ★
-                  </span>
-                </div>
-              ))
-            ) : (
-              <div style={{ padding: '16px', color: '#64748b', fontSize: '13px' }}>No written customer feedback recorded for this period.</div>
-            )}
-          </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
