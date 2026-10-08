@@ -28,88 +28,50 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const platform = (searchParams.get('platform') || 'google').toLowerCase();
-
-  let targetUrl = GOOGLE_CSV;
-  if (platform === 'swiggy') targetUrl = SWIGGY_CSV;
-  if (platform === 'zomato') targetUrl = ZOMATO_CSV;
-
-  try {
-    const res = await fetch(targetUrl, { next: { revalidate: 300 } });
-    const text = await res.text();
-    const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
-    if (lines.length < 2) {
-      return NextResponse.json({
-        success: true,
-        count: 0,
-        overallRating: '0.00',
-        ratedOrders: 0,
-        reviewCount: 0,
-        recentReviews: [],
-      });
-    }
-
-    let headerIdx = 0;
-    for (let i = 0; i < Math.min(5, lines.length); i++) {
-      const lower = lines[i].toLowerCase();
-      if (lower.includes('store type') || lower.includes('store name')) {
-        headerIdx = i;
-        break;
-      }
-    }
-
-    const headers = parseCSVLine(lines[headerIdx]).map((h) => h.replace(/^"|"$/g, '').trim());
-    const storeTypeIdx = headers.findIndex((h) => h.toLowerCase() === 'store type');
-    const ratingIdx = headers.findIndex((h) => h.toLowerCase().includes('rating'));
-    const storeNameIdx = headers.findIndex((h) => h.toLowerCase() === 'store name');
-    const commentIdx = headers.findIndex((h) => h.toLowerCase().includes('review') || h.toLowerCase().includes('comment'));
-    const dateIdx = headers.findIndex((h) => h.toLowerCase() === 'date' || h.toLowerCase() === 'date and time');
-    const ratedOrderIdx = headers.findIndex((h) => h.toLowerCase().includes('rated order'));
-
-    let totalRating = 0;
-    let validRatings = 0;
-    let ratedOrders = 0;
-    const writtenReviews: Array<{ store: string; date: string; rating: number; comment: string }> = [];
-
-    for (let i = headerIdx + 1; i < lines.length; i++) {
-      const cols = parseCSVLine(lines[i]);
-      const storeType = cols[storeTypeIdx] || '';
-      if (storeType.toUpperCase() !== 'COCO') continue;
-
-      const rVal = parseFloat(cols[ratingIdx] || '0');
-      if (!isNaN(rVal) && rVal > 0) {
-        totalRating += rVal;
-        validRatings++;
-      }
-
-      if (ratedOrderIdx !== -1 && cols[ratedOrderIdx] === '1') {
-        ratedOrders++;
-      }
-
-      const comment = (cols[commentIdx] || '').replace(/^"|"$/g, '').trim();
-      if (comment && comment !== '0' && comment.length > 2 && writtenReviews.length < 20) {
-        writtenReviews.push({
-          store: cols[storeNameIdx] || 'COCO Store',
-          date: cols[dateIdx] || '',
-          rating: rVal || 5,
-          comment: comment.slice(0, 160),
-        });
-      }
-    }
-
-    const avg = validRatings > 0 ? (totalRating / validRatings).toFixed(2) : '4.20';
-
-    return NextResponse.json({
-      success: true,
-      platform,
-      overallRating: avg,
-      ratedOrders: ratedOrders || validRatings,
-      reviewCount: writtenReviews.length,
-      recentReviews: writtenReviews,
-    });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+function parseRowDate(dateStr: string, isDMY = false): Date | null {
+  if (!dateStr) return null;
+  const cleaned = dateStr.replace(/["']/g, '').trim();
+  const parts = cleaned.split(/[-/ ]/);
+  if (parts.length < 3) {
+    const d = new Date(cleaned);
+    return isNaN(d.getTime()) ? null : d;
   }
+  let day: number, month: number, year: number;
+  if (isDMY) {
+    day = parseInt(parts[0], 10);
+    month = parseInt(parts[1], 10) - 1;
+    year = parseInt(parts[2].slice(0, 4), 10);
+  } else {
+    month = parseInt(parts[0], 10) - 1;
+    day = parseInt(parts[1], 10);
+    year = parseInt(parts[2].slice(0, 4), 10);
+  }
+  if (year < 100) year += 2000;
+  const d = new Date(year, month, day);
+  return isNaN(d.getTime()) ? null : d;
 }
+
+interface DimensionMetrics {
+  prevRatingSum: number;
+  prevRatingCount: number;
+  currRatingSum: number;
+  currRatingCount: number;
+  prevRatedOrders: number;
+  currRatedOrders: number;
+  prevIssueOrders: number;
+  currIssueOrders: number;
+  prevStars: Record<number, number>;
+  currStars: Record<number, number>;
+}
+
+function createEmptyMetric(): DimensionMetrics {
+  return {
+    prevRatingSum: 0,
+    prevRatingCount: 0,
+    currRatingSum: 0,
+    currRatingCount: 0,
+    prevRatedOrders: 0,
+    currRatedOrders: 0,
+    prevIssueOrders: 0,
+    currIssueOrders: 0,
+    prevStars: { 1: 0
