@@ -23,7 +23,7 @@ export default function Home() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0b0f17', color: '#f3f4f6', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '32px' }}>
-      {/* Top Header */}
+      {/* Top Header without COCO ONLY */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1f293d', paddingBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#ffffff', letterSpacing: '-0.02em' }}>
@@ -39,7 +39,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Top Operations KPI Row */}
+      {/* Operations Metric Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', margin: '24px 0' }}>
         <div style={{ backgroundColor: '#131c2e', border: '1px solid #1f293d', borderRadius: '12px', padding: '18px' }}>
           <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Net Sales</span>
@@ -81,7 +81,6 @@ export default function Home() {
           </div>
 
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            {/* Platform Selector */}
             <div style={{ display: 'flex', backgroundColor: '#0b0f17', padding: '4px', borderRadius: '10px', border: '1px solid #1f293d' }}>
               {(['Google', 'Swiggy', 'Zomato'] as Platform[]).map((p) => (
                 <button
@@ -103,7 +102,6 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Time Filter Selector */}
             <div style={{ display: 'flex', backgroundColor: '#0b0f17', padding: '4px', borderRadius: '10px', border: '1px solid #1f293d' }}>
               {(['Yesterday', 'LW', 'L2W', 'MTD', 'LMTD', 'Last 30 Days'] as TimePeriod[]).map((t) => (
                 <button
@@ -154,7 +152,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Live Reviews Feed */}
+        {/* Reviews Feed */}
         <div style={{ marginTop: '24px' }}>
           <h3 style={{ fontSize: '13px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 14px' }}>
             Recent {platform} Reviews ({timeFilter})
