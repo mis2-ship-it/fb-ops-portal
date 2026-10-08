@@ -23,7 +23,7 @@ export default function Home() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#090d16', color: '#f1f5f9', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '32px' }}>
-      {/* Header without COCO ONLY */}
+      {/* Top Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1e293b', paddingBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#ffffff' }}>
@@ -39,7 +39,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Top 5 Operations Cards */}
+      {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', margin: '24px 0' }}>
         <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '18px' }}>
           <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Net Sales</span>
@@ -111,7 +111,7 @@ export default function Home() {
                   onClick={() => setTimeFilter(t)}
                   style={{
                     backgroundColor: timeFilter === t ? '#334155' : 'transparent',
-                    color: timeFilter === t ? '#ffffff' : '#94a3b8',
+                    color: '#ffffff',
                     border: 'none',
                     borderRadius: '7px',
                     padding: '6px 12px',
@@ -156,58 +156,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Live Customer Comments Feed */}
+        {/* Live Comments Feed */}
         <div style={{ marginTop: '24px' }}>
           <h3 style={{ fontSize: '13px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 14px' }}>
-            Recent {platform} Comments ({timeFilter})
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {loading ? (
-              <div style={{ padding: '16px', color: '#64748b', fontSize: '13px' }}>Syncing data from Google Sheets...</div>
-            ) : data?.recentReviews?.length > 0 ? (
-              data.recentReviews.map((rev: any, idx: number) => (
-                <div
-                  key={idx}
-                  style={{
-                    backgroundColor: '#111827',
-                    border: '1px solid #1f2937',
-                    borderRadius: '10px',
-                    padding: '14px 18px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: '16px',
-                  }}
-                >
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                      <span style={{ fontWeight: 600, fontSize: '14px', color: '#ffffff' }}>{rev.store}</span>
-                      <span style={{ fontSize: '11px', color: '#64748b' }}>{rev.date}</span>
-                    </div>
-                    <p style={{ margin: 0, fontSize: '13px', color: '#cbd5e1' }}>"{rev.comment}"</p>
-                  </div>
-                  <span
-                    style={{
-                      padding: '4px 10px',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      backgroundColor: rev.rating >= 4 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                      color: rev.rating >= 4 ? '#34d399' : '#f87171',
-                      border: rev.rating >= 4 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {rev.rating} ★
-                  </span>
-                </div>
-              ))
-            ) : (
-              <div style={{ padding: '16px', color: '#64748b', fontSize: '13px' }}>No customer comments for this period.</div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
