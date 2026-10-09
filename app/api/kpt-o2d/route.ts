@@ -2,6 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
+interface StoreMetric {
+  code: string;
+  name: string;
+  region: string;
+  brand: string;
+  ftdOrders: number;
+  ftdKpt: number;
+  ftdKptP80: number;
+  ftdKptMed: number;
+  ftdO2d: number;
+  ftdO2dP80: number;
+  ftdO2dMed: number;
+  mtdOrders: number;
+  mtdKpt: number;
+  mtdKptP80: number;
+  mtdKptMed: number;
+  mtdO2d: number;
+  mtdO2dP80: number;
+  mtdO2dMed: number;
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const brand = searchParams.get('brand') || 'ALL';
@@ -20,7 +41,7 @@ export async function GET(req: NextRequest) {
     { param: 'Breached Orders O2D', ftdSwiggy: '817.0', ftdZomato: '369.0', ftdAll: '1186.0', mtdSwiggy: '4873.0', mtdZomato: '3031.0', mtdAll: '7904.0' },
   ];
 
-  const storesMaster = [
+  const storesMaster: StoreMetric[] = [
     { code: 'FZBBLR023', name: 'Tata Sherwood', region: 'KA', brand: 'Frozen Bottle', ftdOrders: 24.0, ftdKpt: 5.89, ftdKptP80: 8.0, ftdKptMed: 4.8, ftdO2d: 28.11, ftdO2dP80: 36.16, ftdO2dMed: 25.6, mtdOrders: 137.0, mtdKpt: 6.48, mtdKptP80: 8.4, mtdKptMed: 5.6, mtdO2d: 25.65, mtdO2dP80: 32.3, mtdO2dMed: 23.0 },
     { code: 'FZBUDP001', name: 'Manipal', region: 'KA', brand: 'Frozen Bottle', ftdOrders: 21.0, ftdKpt: 5.4, ftdKptP80: 7.6, ftdKptMed: 4.4, ftdO2d: 19.85, ftdO2dP80: 24.2, ftdO2dMed: 17.4, mtdOrders: 103.0, mtdKpt: 7.62, mtdKptP80: 9.86, mtdKptMed: 6.0, mtdO2d: 20.92, mtdO2dP80: 25.08, mtdO2dMed: 19.1 },
     { code: 'FZBBLR029', name: 'Tumkur', region: 'KA', brand: 'Frozen Bottle', ftdOrders: 15.0, ftdKpt: 10.71, ftdKptP80: 20.12, ftdKptMed: 7.4, ftdO2d: 31.17, ftdO2dP80: 44.7, ftdO2dMed: 27.0, mtdOrders: 113.0, mtdKpt: 10.92, mtdKptP80: 17.42, mtdKptMed: 8.3, mtdO2d: 29.41, mtdO2dP80: 39.66, mtdO2dMed: 26.9 },
