@@ -30,23 +30,15 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
-function parseStrictDate(dateStr: string, monthColStr = ''): Date | null {
+// Strict MM-DD-YYYY parser
+function parseMMDDYYYY(dateStr: string): Date | null {
   if (!dateStr) return null;
   const cleaned = dateStr.replace(/["']/g, '').trim();
-
-  let overrideMonth = -1;
-  const mLower = monthColStr.toLowerCase();
-  if (mLower.includes('oct')) overrideMonth = 9;
-  else if (mLower.includes('sep')) overrideMonth = 8;
-  else if (mLower.includes('aug')) overrideMonth = 7;
-  else if (mLower.includes('jul')) overrideMonth = 6;
-  else if (mLower.includes('jun')) overrideMonth = 5;
-
   const parts = cleaned.split(/[-/ ]/);
   if (parts.length < 3) return null;
 
-  let d = parseInt(parts[0], 10);
-  let m = parseInt(parts[1], 10) - 1;
+  let m = parseInt(parts[0], 10) - 1;
+  let d = parseInt(parts[1], 10);
   let y = parseInt(parts[2].slice(0, 4), 10);
 
   if (parts[0].length === 4) {
@@ -55,16 +47,10 @@ function parseStrictDate(dateStr: string, monthColStr = ''): Date | null {
     d = parseInt(parts[2], 10);
   }
 
-  if (y > 2026 || y < 100) y = 2026;
+  if (y < 100) y += 2000;
+  if (y !== 2026) return null; // Reject historical 2025 rows
 
-  if (overrideMonth !== -1) {
-    m = overrideMonth;
-    if (d > 31 && parseInt(parts[1], 10) <= 31) {
-      d = parseInt(parts[1], 10);
-    }
-  }
-
-  const res = new Date(y, m, Math.min(31, Math.max(1, d)));
+  const res = new Date(y, m, d);
   return isNaN(res.getTime()) ? null : res;
 }
 
@@ -104,34 +90,31 @@ export async function GET(req: Request) {
     let colStore = 3;         // Zomato Col D
     let colBrand = 4;         // Zomato Col E
     let colCategory = 6;      // Zomato Col G
-    let colGroupComment = 7;  // Zomato Col H (Group Comments)
+    let colGroupComment = 7;  // Zomato Col H
     let colOrderCount = 8;    // Zomato Col I
     let colRating = 9;        // Zomato Col J
     let colStoreType = 10;    // Zomato Col K
     let colRegion = 11;       // Zomato Col L
     let colRatedOrder = 12;   // Zomato Col M
-    let colComment = 13;      // Zomato Col N (Comments)
-    let colMonth = 0;         // Col A
+    let colCustomerComment = 13; // Zomato Col N
 
     if (platform === 'swiggy') {
-      colMonth = 0;           // Col A
-      colDate = 4;            // Col E
-      colStore = 5;           // Col F
-      colBrand = 6;           // Col G
-      colCategory = 8;        // Col I
-      colGroupComment = 9;    // Col J (Comments Group)
-      colOrderCount = 10;     // Col K
-      colRating = 11;         // Col L
-      colStoreType = 12;      // Col M
-      colRegion = 13;         // Col N
-      colRatedOrder = 14;     // Col O
-      colComment = 9;         // Col J
+      colDate = 4;            // Swiggy Col E (Date: MM-DD-YYYY)
+      colStore = 5;           // Swiggy Col F
+      colBrand = 6;           // Swiggy Col G
+      colCategory = 8;        // Swiggy Col I
+      colGroupComment = 9;    // Swiggy Col J (Comments Group)
+      colOrderCount = 10;     // Swiggy Col K
+      colRating = 11;         // Swiggy Col L
+      colStoreType = 12;      // Swiggy Col M
+      colRegion = 13;         // Swiggy Col N
+      colRatedOrder = 14;     // Swiggy Col O
+      colCustomerComment = 16;// Swiggy Col Q (Customer comments)
     } else if (platform === 'google') {
       colRating = 7;          // Col H
-      colComment = 8;         // Col I
+      colCustomerComment = 8; // Col I
       colGroupComment = 8;
       colDate = 10;           // Col K
-      colMonth = 11;          // Col L
       colStore = 12;          // Col M
       colStoreType = 13;      // Col N
       colRegion = 14;         // Col O
@@ -158,6 +141,7 @@ export async function GET(req: Request) {
 
     const rows: CleanRow[] = [];
     const regionStoresMap: Record<string, Set<string>> = {};
+    const todayLimit = new Date(2026, 9, 9, 23, 59, 59); // Max capped at October 9, 2026
 
     for (let i = 1; i < lines.length; i++) {
       const cols = parseCSVLine(lines[i]);
@@ -166,8 +150,8 @@ export async function GET(req: Request) {
       const sType = (cols[colStoreType] || '').trim().toUpperCase();
       if (sType !== 'COCO') continue;
 
-      const d = parseStrictDate(cols[colDate] || '', cols[colMonth] || '');
-      if (!d) continue;
+      const d = parseMMDDYYYY(cols[colDate] || '');
+      if (!d || d.getTime() > todayLimit.getTime()) continue;
 
       let rawBrand = (cols[colBrand] || '').trim();
       let matchedBrand = VALID_BRANDS.find((b) => rawBrand.toLowerCase().includes(b.toLowerCase()));
@@ -193,21 +177,26 @@ export async function GET(req: Request) {
       const isRated = colRatedOrder !== -1 && cols[colRatedOrder] ? cols[colRatedOrder].trim() === '1' : hasRating;
       const orderCount = colOrderCount !== -1 ? parseInt(cols[colOrderCount] || '1', 10) || 1 : 1;
 
-      // Issue Type Categorization (Qty, Quality, Missing, Wrong, Packing)
-      const rawIssueText = (cols[colGroupComment] || '').toLowerCase();
+      // Classify Issue Type
+      const rawGroup = (cols[colGroupComment] || '').toLowerCase();
       let issueType = '';
-      if (rawIssueText.includes('quantity') || rawIssueText.includes('qty')) issueType = 'Quantity Issue';
-      else if (rawIssueText.includes('quality') || rawIssueText.includes('taste') || rawIssueText.includes('spoiled')) issueType = 'Quality Issue';
-      else if (rawIssueText.includes('missing') || rawIssueText.includes('item missing')) issueType = 'Missing Item Issue';
-      else if (rawIssueText.includes('wrong') || rawIssueText.includes('incorrect')) issueType = 'Wrong Item Issue';
-      else if (rawIssueText.includes('packing') || rawIssueText.includes('spill') || rawIssueText.includes('packaging')) issueType = 'Packing Issue';
-      else if (rawIssueText.length > 2 && rawIssueText !== '0' && rawIssueText !== 'null') {
+      if (rawGroup.includes('quantity') || rawGroup.includes('qty')) issueType = 'Quantity Issue';
+      else if (rawGroup.includes('quality') || rawGroup.includes('taste') || rawGroup.includes('spoiled')) issueType = 'Quality Issue';
+      else if (rawGroup.includes('missing')) issueType = 'Missing Item Issue';
+      else if (rawGroup.includes('wrong')) issueType = 'Wrong Item Issue';
+      else if (rawGroup.includes('packing') || rawGroup.includes('spill') || rawGroup.includes('packaging')) issueType = 'Packing Issue';
+      else if (rawGroup.length > 2 && rawGroup !== '0' && rawGroup !== 'null') {
         issueType = (cols[colGroupComment] || '').trim();
       }
 
       const isIssue = (hasRating && rVal <= 3) || issueType.length > 0;
       const categoryName = colCategory !== -1 && cols[colCategory] ? cols[colCategory].trim() : 'General';
-      const commentText = (cols[colComment] || cols[colGroupComment] || '').replace(/^"|"$/g, '').trim();
+
+      // Swiggy Col Q or Zomato Col N customer comments
+      let custComment = (cols[colCustomerComment] || '').replace(/^"|"$/g, '').trim();
+      if (!custComment || custComment === '0' || custComment.toLowerCase() === 'null') {
+        custComment = (cols[colGroupComment] || '').replace(/^"|"$/g, '').trim();
+      }
 
       rows.push({
         date: d,
@@ -221,14 +210,9 @@ export async function GET(req: Request) {
         orderCount,
         isIssue,
         issueType: issueType || (rVal <= 3 && hasRating ? 'Low Rating (< 4★)' : ''),
-        comment: commentText,
+        comment: custComment,
       });
     }
-
-    const currYear = 2026;
-    const currMonth = 9;  // Oct (0-indexed)
-    const prevMonth = 8;  // Sep
-    const prevYear = 2026;
 
     const currentLabel = 'Oct-26';
     const previousLabel = 'Sep-26';
@@ -249,31 +233,33 @@ export async function GET(req: Request) {
       return true;
     });
 
-    // 1. Line Chart Data
+    // Line Chart (strictly Oct 1 to Oct 9 for day granularity)
     const dayMap: Record<string, { sum: number; count: number; date: string }> = {};
     const weekMap: Record<string, { sum: number; count: number; label: string }> = {};
     const monthMap: Record<string, { sum: number; count: number; label: string }> = {};
 
-    const refDate = new Date(2026, 9, 7);
-
     for (const r of filteredRows) {
       if (r.rating <= 0) continue;
 
-      if (r.date.getFullYear() === 2026 && r.date.getMonth() === 9) {
-        if (!dayMap[r.dateKey]) dayMap[r.dateKey] = { sum: 0, count: 0, date: `10-${String(r.date.getDate()).padStart(2, '0')}` };
-        dayMap[r.dateKey].sum += r.rating;
-        dayMap[r.dateKey].count++;
+      // Day Level: Oct 1 - Oct 9, 2026
+      if (r.date.getFullYear() === 2026 && r.date.getMonth() === 9 && r.date.getDate() <= 9) {
+        const dKey = `10-${String(r.date.getDate()).padStart(2, '0')}`;
+        if (!dayMap[dKey]) dayMap[dKey] = { sum: 0, count: 0, date: dKey };
+        dayMap[dKey].sum += r.rating;
+        dayMap[dKey].count++;
       }
 
-      const diffDays = Math.floor((refDate.getTime() - r.date.getTime()) / (24 * 60 * 60 * 1000));
+      // Week Level
+      const diffDays = Math.floor((todayLimit.getTime() - r.date.getTime()) / (24 * 60 * 60 * 1000));
       const weekDiff = Math.floor(diffDays / 7);
       if (diffDays >= 0 && weekDiff < 6) {
-        const wKey = `WK - ${42 - weekDiff}`;
+        const wKey = `WK - ${41 - weekDiff}`;
         if (!weekMap[wKey]) weekMap[wKey] = { sum: 0, count: 0, label: wKey };
         weekMap[wKey].sum += r.rating;
         weekMap[wKey].count++;
       }
 
+      // Month Level
       if (r.date.getFullYear() === 2026 && r.date.getMonth() >= 4 && r.date.getMonth() <= 9) {
         const mKey = r.date.toLocaleString('default', { month: 'short' }) + '-26';
         if (!monthMap[mKey]) monthMap[mKey] = { sum: 0, count: 0, label: mKey };
@@ -302,7 +288,7 @@ export async function GET(req: Request) {
       month: monthPoints,
     };
 
-    // 2. Issue Breakdown Analysis (Qty, Quality, Missing, Wrong, Packing)
+    // Issue Breakdown Analysis
     const issueCounts = {
       'Quantity Issue': { prev: 0, curr: 0 },
       'Quality Issue': { prev: 0, curr: 0 },
@@ -311,17 +297,24 @@ export async function GET(req: Request) {
       'Packing Issue': { prev: 0, curr: 0 },
     };
 
-    // 3. Category Level Metrics
-    const categoryStats: Record<string, { prevIssues: number; currIssues: number; currRatingSum: number; currRatingCount: number; currOrders: number }> = {};
+    // Category Level Metrics (Monthly Comparison: Sep-26 vs Oct-26)
+    const categoryStats: Record<string, {
+      prevIssues: number;
+      currIssues: number;
+      prevRatingSum: number;
+      prevRatingCount: number;
+      currRatingSum: number;
+      currRatingCount: number;
+      prevOrders: number;
+      currOrders: number;
+    }> = {};
 
-    // 4. Latest Customer Comments
     const customerComments: Array<{ store: string; date: string; rating: number; issue: string; comment: string; time: number }> = [];
 
     for (const r of filteredRows) {
-      const isC = r.date.getFullYear() === currYear && r.date.getMonth() === currMonth;
-      const isP = r.date.getFullYear() === prevYear && r.date.getMonth() === prevMonth;
+      const isC = r.date.getFullYear() === 2026 && r.date.getMonth() === 9; // Oct-26
+      const isP = r.date.getFullYear() === 2026 && r.date.getMonth() === 8; // Sep-26
 
-      // Issue Breakdown Counts
       if (r.issueType) {
         const key = Object.keys(issueCounts).find((k) => r.issueType.toLowerCase().includes(k.toLowerCase().split(' ')[0]));
         if (key) {
@@ -330,10 +323,18 @@ export async function GET(req: Request) {
         }
       }
 
-      // Category Metrics
       if (r.category && r.category !== '0' && r.category !== 'General') {
         if (!categoryStats[r.category]) {
-          categoryStats[r.category] = { prevIssues: 0, currIssues: 0, currRatingSum: 0, currRatingCount: 0, currOrders: 0 };
+          categoryStats[r.category] = {
+            prevIssues: 0,
+            currIssues: 0,
+            prevRatingSum: 0,
+            prevRatingCount: 0,
+            currRatingSum: 0,
+            currRatingCount: 0,
+            prevOrders: 0,
+            currOrders: 0,
+          };
         }
         if (isC) {
           if (r.isIssue) categoryStats[r.category].currIssues += r.orderCount;
@@ -344,17 +345,22 @@ export async function GET(req: Request) {
           }
         } else if (isP) {
           if (r.isIssue) categoryStats[r.category].prevIssues += r.orderCount;
+          if (r.isRatedOrder) categoryStats[r.category].prevOrders += r.orderCount;
+          if (r.rating > 0) {
+            categoryStats[r.category].prevRatingSum += r.rating;
+            categoryStats[r.category].prevRatingCount++;
+          }
         }
       }
 
-      // Collect Comments
+      // Collect Swiggy / Zomato comments for Oct-26
       if (isC && r.comment && r.comment.length > 2 && r.comment !== '0' && r.comment.toLowerCase() !== 'null') {
         customerComments.push({
           store: r.store,
-          date: r.date.toISOString().split('T')[0],
+          date: `10-${String(r.date.getDate()).padStart(2, '0')}-2026`,
           rating: r.rating > 0 ? r.rating : 4,
-          issue: r.issueType || 'General Feedback',
-          comment: r.comment.slice(0, 160),
+          issue: r.issueType || 'Customer Feedback',
+          comment: r.comment.slice(0, 180),
           time: r.date.getTime(),
         });
       }
@@ -363,17 +369,24 @@ export async function GET(req: Request) {
     customerComments.sort((a, b) => b.time - a.time);
 
     const categoryList = Object.entries(categoryStats)
-      .map(([name, stat]) => ({
-        category: name,
-        prevIssues: stat.prevIssues,
-        currIssues: stat.currIssues,
-        currRating: stat.currRatingCount > 0 ? (stat.currRatingSum / stat.currRatingCount).toFixed(2) : '3.80',
-        issueRate: stat.currOrders > 0 ? ((stat.currIssues / stat.currOrders) * 100).toFixed(1) + '%' : '0%',
-      }))
-      .sort((a, b) => b.currIssues - a.currIssues)
-      .slice(0, 8);
+      .map(([name, stat]) => {
+        const prevAvg = stat.prevRatingCount > 0 ? (stat.prevRatingSum / stat.prevRatingCount).toFixed(2) : '0.00';
+        const currAvg = stat.currRatingCount > 0 ? (stat.currRatingSum / stat.currRatingCount).toFixed(2) : '0.00';
+        const issueDiff = stat.prevIssues > 0 ? (((stat.currIssues - stat.prevIssues) / stat.prevIssues) * 100).toFixed(1) : '0.0';
 
-    // 5. Main Matrix Calculation
+        return {
+          category: name,
+          prevIssues: stat.prevIssues,
+          currIssues: stat.currIssues,
+          issueDiff: (parseFloat(issueDiff) >= 0 ? '+' : '') + issueDiff + '%',
+          prevRating: prevAvg,
+          currRating: currAvg,
+          currOrders: stat.currOrders,
+        };
+      })
+      .sort((a, b) => b.currIssues - a.currIssues)
+      .slice(0, 10);
+
     const buildMetric = (name: string, targetRows: CleanRow[]): MetricSummary => {
       let pSum = 0, pCount = 0, cSum = 0, cCount = 0;
       let pRated = 0, cRated = 0, pIssues = 0, cIssues = 0;
@@ -381,8 +394,8 @@ export async function GET(req: Request) {
       const cStars: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
 
       for (const r of targetRows) {
-        const isC = r.date.getFullYear() === currYear && r.date.getMonth() === currMonth;
-        const isP = r.date.getFullYear() === prevYear && r.date.getMonth() === prevMonth;
+        const isC = r.date.getFullYear() === 2026 && r.date.getMonth() === 9;
+        const isP = r.date.getFullYear() === 2026 && r.date.getMonth() === 8;
         if (!isC && !isP) continue;
 
         if (isC) {
@@ -456,7 +469,7 @@ export async function GET(req: Request) {
         diffPct: cnt.prev > 0 ? (((cnt.curr - cnt.prev) / cnt.prev) * 100).toFixed(1) + '%' : '0%',
       })),
       categoryPerformance: categoryList,
-      recentComments: customerComments.slice(0, 20),
+      recentComments: customerComments.slice(0, 25),
       performance: { overall, brands, regions },
     });
   } catch (err: any) {
