@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 
 type MainView = 'Operations' | 'Sales';
+type SalesSubView = 'daily' | 'weekly' | 'monthly';
 type Platform = 'Google' | 'Swiggy' | 'Zomato';
 type ChartGranularity = 'day' | 'week' | 'month';
 
@@ -20,6 +21,7 @@ export default function Home() {
   const [opsLoading, setOpsLoading] = useState(true);
 
   // Sales Hub State
+  const [salesSubView, setSalesSubView] = useState<SalesSubView>('daily');
   const [salesBrand, setSalesBrand] = useState('ALL');
   const [salesRegion, setSalesRegion] = useState('ALL');
   const [salesSource, setSalesSource] = useState('ALL');
@@ -63,6 +65,7 @@ export default function Home() {
     if (mainView === 'Sales') {
       setSalesLoading(true);
       const params = new URLSearchParams({
+        view: salesSubView,
         brand: salesBrand,
         region: salesRegion,
         source: salesSource,
@@ -76,9 +79,12 @@ export default function Home() {
         })
         .catch(() => setSalesLoading(false));
     }
-  }, [mainView, salesBrand, salesRegion, salesSource, salesSession]);
+  }, [mainView, salesSubView, salesBrand, salesRegion, salesSource, salesSession]);
 
-  // Operations Cascading Stores
+  const pLabel = opsData?.previousLabel || 'Sep-26';
+  const cLabel = opsData?.currentLabel || 'Oct-26';
+  const chartPoints = opsData?.chartData?.[granularity] || [];
+
   const availableStores = React.useMemo(() => {
     if (!opsData?.slicers?.regionStores) return [];
     if (selectedRegion === 'ALL') {
@@ -93,71 +99,34 @@ export default function Home() {
     return (opsData.slicers.regionStores[selectedRegion] || []).sort();
   }, [opsData, selectedRegion]);
 
-  const pLabel = opsData?.previousLabel || 'Sep-26';
-  const cLabel = opsData?.currentLabel || 'Oct-26';
-  const chartPoints = opsData?.chartData?.[granularity] || [];
-
   const filteredComments = React.useMemo(() => {
     if (!opsData?.recentComments) return [];
     if (commentStarFilter === 'ALL') return opsData.recentComments;
     return opsData.recentComments.filter((c: any) => Math.round(c.rating) === commentStarFilter);
   }, [opsData, commentStarFilter]);
 
-  // SVG Chart for Hourly Sales
-  const renderHourlySalesChart = () => {
-    const list = salesData?.hourlySales || [];
-    if (list.length === 0) return null;
-    const width = 850;
-    const height = 180;
-    const padding = 45;
-    const revs = list.map((item: any) => item.rev);
-    const maxRev = Math.max(...revs) * 1.1;
-
-    const getX = (idx: number) => padding + (idx * (width - 2 * padding)) / (list.length - 1);
-    const getY = (val: number) => height - padding - (val / (maxRev || 1)) * (height - 2 * padding);
-
-    const pointsStr = list.map((p: any, idx: number) => `${getX(idx)},${getY(p.rev)}`).join(' ');
-
-    return (
-      <div style={{ width: '100%', overflowX: 'auto' }}>
-        <svg viewBox={`0 0 ${width} ${height}`} style={{ minWidth: '700px', width: '100%', height: '180px' }}>
-          <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#1f293d" strokeWidth="1" />
-          <polyline fill="none" stroke="#38bdf8" strokeWidth="3" points={pointsStr} />
-          {list.map((p: any, idx: number) => {
-            const cx = getX(idx);
-            const cy = getY(p.rev);
-            return (
-              <g key={idx}>
-                <circle cx={cx} cy={cy} r="4" fill="#38bdf8" stroke="#090d16" strokeWidth="2" />
-                {idx % 2 === 0 && (
-                  <text x={cx} y={cy - 8} fill="#ffffff" fontSize="9" fontWeight="bold" textAnchor="middle">
-                    ₹{(p.rev / 1000).toFixed(0)}k
-                  </text>
-                )}
-                <text x={cx} y={height - padding + 16} fill="#94a3b8" fontSize="8" textAnchor="middle">
-                  {p.time.replace(':00', '')}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-    );
+  const getAovColHeaders = () => {
+    if (salesSubView === 'weekly') {
+      return ['Bucket', 'Current WK', 'Last Week', 'Last 2 Week', 'Growth %'];
+    }
+    if (salesSubView === 'monthly') {
+      return ['Bucket', 'Oct MTD', 'Sep-26', 'Aug-26', 'Jul-26'];
+    }
+    return ['Bucket', 'Yesterday', 'Last Week', 'MTD', 'LMTD'];
   };
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#070b12', color: '#f3f4f6', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '14px', boxSizing: 'border-box' }}>
       
-      {/* Top Header & Main View Slicer */}
+      {/* Top Header & Main Mode Toggle */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1f293d', paddingBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: '#ffffff' }}>Frozen Bottle Operations Hub</h1>
           <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#94a3b8' }}>
-            Executive Intelligence & Real-Time Performance Portal
+            Store Performance, Customer Feedback & Revenue Intelligence
           </p>
         </div>
 
-        {/* View Mode Slicer: Operations vs Live Sales */}
         <div style={{ display: 'flex', backgroundColor: '#0f172a', padding: '4px', borderRadius: '10px', border: '1px solid #1f293d' }}>
           <button
             onClick={() => setMainView('Operations')}
@@ -187,29 +156,49 @@ export default function Home() {
               cursor: 'pointer',
             }}
           >
-            📈 Live Sales
+            📈 Sales Hub
           </button>
         </div>
       </div>
 
       {/* ======================= SALES DASHBOARD VIEW ======================= */}
       {mainView === 'Sales' ? (
-        <div style={{ marginTop: '16px' }}>
+        <div style={{ marginTop: '14px' }}>
           
-          {/* Sales Top Insight & Timestamp */}
+          {/* Top Bar: Insight & Sub-View Slicer (Daily, Weekly, Monthly) */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '14px' }}>🧠</span>
               <span style={{ fontSize: '13px', fontWeight: 700, color: '#f59e0b' }}>
-                {salesData?.executiveInsight || '-9.6% vs LW, +22.3% vs L2W, +8.1% vs MoM, +41.7% vs LY -> decline'}
+                {salesData?.executiveInsight || '-9.6% vs LW, +22.3% vs L2W, +8.1% vs MoM, +41.7% vs LY'}
               </span>
             </div>
-            <span style={{ fontSize: '11px', color: '#94a3b8', backgroundColor: '#0f172a', padding: '4px 10px', borderRadius: '6px', border: '1px solid #1f293d' }}>
-              🕒 {salesData?.dataTill || 'Data Till: 09 Oct 2026 05:00 AM'}
-            </span>
+
+            {/* Sales Sub-View Slicer: Daily | Weekly | Monthly */}
+            <div style={{ display: 'flex', backgroundColor: '#0f172a', padding: '3px', borderRadius: '8px', border: '1px solid #1f293d' }}>
+              {(['daily', 'weekly', 'monthly'] as SalesSubView[]).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setSalesSubView(v)}
+                  style={{
+                    backgroundColor: salesSubView === v ? '#10b981' : 'transparent',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '5px 14px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {v === 'daily' ? '📅 Daily' : v === 'weekly' ? '📆 Weekly' : '🗓️ Monthly'}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Sales Slicers Row: Brand, Region, Source, Session */}
+          {/* Sales Slicers: Brand, Region, Source, Session */}
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', backgroundColor: '#0f172a', padding: '10px', borderRadius: '10px', border: '1px solid #1f293d', marginBottom: '16px' }}>
             <div style={{ flex: '1 1 100px' }}>
               <select
@@ -256,18 +245,18 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Sales Top KPI Cards */}
+          {/* Primary Sales KPI Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginBottom: '18px' }}>
             <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '10px', padding: '12px' }}>
               <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase' }}>Net Rev</span>
               <div style={{ fontSize: '18px', fontWeight: 700, color: '#ffffff', margin: '4px 0 2px' }}>₹ {salesData?.kpis?.netRev || '16,54,290.98'}</div>
-              <span style={{ fontSize: '9px', color: '#10b981' }}>+8.14% vs MoM</span>
+              <span style={{ fontSize: '9px', color: '#10b981' }}>Live Pacing Active</span>
             </div>
 
             <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '10px', padding: '12px' }}>
               <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase' }}>Orders (Txn)</span>
               <div style={{ fontSize: '18px', fontWeight: 700, color: '#38bdf8', margin: '4px 0 2px' }}>{salesData?.kpis?.orders || '6,694'}</div>
-              <span style={{ fontSize: '9px', color: '#10b981' }}>+13.38% vs MoM</span>
+              <span style={{ fontSize: '9px', color: '#10b981' }}>+13.38% MoM</span>
             </div>
 
             <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '10px', padding: '12px' }}>
@@ -279,7 +268,7 @@ export default function Home() {
             <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '10px', padding: '12px' }}>
               <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase' }}>AOV</span>
               <div style={{ fontSize: '18px', fontWeight: 700, color: '#f59e0b', margin: '4px 0 2px' }}>₹ {salesData?.kpis?.aov || '247.13'}</div>
-              <span style={{ fontSize: '9px', color: '#64748b' }}>Basket Average</span>
+              <span style={{ fontSize: '9px', color: '#64748b' }}>Avg Basket</span>
             </div>
 
             <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '10px', padding: '12px' }}>
@@ -295,38 +284,78 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Overall KPI Table */}
+          {/* Dynamic Sales KPI Matrix (Changes per Daily / Weekly / Monthly mode) */}
           <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px', marginBottom: '16px' }}>
-            <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#ffffff', textTransform: 'uppercase' }}>📈 Overall KPI</h3>
+            <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#ffffff', textTransform: 'uppercase' }}>
+              📈 {salesSubView.toUpperCase()} SALES SUMMARY
+            </h3>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', minWidth: '700px' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#1e293b', color: '#94a3b8' }}>
                     <th style={{ padding: '6px', textAlign: 'left' }}>Parameters</th>
-                    <th style={{ padding: '6px', textAlign: 'center' }}>Today</th>
-                    <th style={{ padding: '6px', textAlign: 'center' }}>Last Week</th>
-                    <th style={{ padding: '6px', textAlign: 'center' }}>Last 2 Week</th>
-                    <th style={{ padding: '6px', textAlign: 'center' }}>Last Month</th>
-                    <th style={{ padding: '6px', textAlign: 'center' }}>Last Year</th>
-                    <th style={{ padding: '6px', textAlign: 'center' }}>LW GW%</th>
-                    <th style={{ padding: '6px', textAlign: 'center' }}>L2W GW%</th>
-                    <th style={{ padding: '6px', textAlign: 'center' }}>MoM GW%</th>
-                    <th style={{ padding: '6px', textAlign: 'center' }}>LY GW%</th>
+                    {salesSubView === 'daily' && (
+                      <>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>Yesterday</th>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>MTD</th>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>LMTD</th>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>Trends</th>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>Last Month</th>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>Last Year</th>
+                      </>
+                    )}
+                    {salesSubView === 'weekly' && (
+                      <>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>Current WK</th>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>Last Week</th>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>Last 2 Week</th>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>CWK vs LW</th>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>CWK vs L2W</th>
+                      </>
+                    )}
+                    {salesSubView === 'monthly' && (
+                      <>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>Oct MTD</th>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>Sep-26</th>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>Aug-26</th>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>Jul-26</th>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>MoM GW%</th>
+                      </>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
                   {salesData?.overallKPI?.map((k: any) => (
                     <tr key={k.param} style={{ borderBottom: '1px solid #131c2e' }}>
                       <td style={{ padding: '6px', fontWeight: 600, color: '#ffffff' }}>{k.param}</td>
-                      <td style={{ padding: '6px', textAlign: 'center', color: '#38bdf8', fontWeight: 700 }}>{k.today}</td>
-                      <td style={{ padding: '6px', textAlign: 'center', color: '#cbd5e1' }}>{k.lw}</td>
-                      <td style={{ padding: '6px', textAlign: 'center', color: '#cbd5e1' }}>{k.l2w}</td>
-                      <td style={{ padding: '6px', textAlign: 'center', color: '#cbd5e1' }}>{k.lm}</td>
-                      <td style={{ padding: '6px', textAlign: 'center', color: '#cbd5e1' }}>{k.ly}</td>
-                      <td style={{ padding: '6px', textAlign: 'center', color: parseFloat(k.lwGw) >= 0 ? '#34d399' : '#f87171' }}>{k.lwGw}</td>
-                      <td style={{ padding: '6px', textAlign: 'center', color: '#34d399', fontWeight: 700 }}>{k.l2wGw}</td>
-                      <td style={{ padding: '6px', textAlign: 'center', color: parseFloat(k.momGw) >= 0 ? '#34d399' : '#f87171', fontWeight: 700 }}>{k.momGw}</td>
-                      <td style={{ padding: '6px', textAlign: 'center', color: '#34d399', fontWeight: 700 }}>{k.lyGw}</td>
+                      {salesSubView === 'daily' && (
+                        <>
+                          <td style={{ padding: '6px', textAlign: 'center', color: '#38bdf8', fontWeight: 700 }}>{k.yesterday}</td>
+                          <td style={{ padding: '6px', textAlign: 'center', color: '#cbd5e1' }}>{k.mtd}</td>
+                          <td style={{ padding: '6px', textAlign: 'center', color: '#cbd5e1' }}>{k.lmtd}</td>
+                          <td style={{ padding: '6px', textAlign: 'center', color: '#34d399', fontWeight: 700 }}>{k.trends}</td>
+                          <td style={{ padding: '6px', textAlign: 'center', color: '#cbd5e1' }}>{k.lm}</td>
+                          <td style={{ padding: '6px', textAlign: 'center', color: '#cbd5e1' }}>{k.ly}</td>
+                        </>
+                      )}
+                      {salesSubView === 'weekly' && (
+                        <>
+                          <td style={{ padding: '6px', textAlign: 'center', color: '#38bdf8', fontWeight: 700 }}>{k.cwk}</td>
+                          <td style={{ padding: '6px', textAlign: 'center', color: '#cbd5e1' }}>{k.lw}</td>
+                          <td style={{ padding: '6px', textAlign: 'center', color: '#cbd5e1' }}>{k.l2w}</td>
+                          <td style={{ padding: '6px', textAlign: 'center', color: parseFloat(k.gwLw) >= 0 ? '#34d399' : '#f87171', fontWeight: 700 }}>{k.gwLw}</td>
+                          <td style={{ padding: '6px', textAlign: 'center', color: '#34d399', fontWeight: 700 }}>{k.gwL2w}</td>
+                        </>
+                      )}
+                      {salesSubView === 'monthly' && (
+                        <>
+                          <td style={{ padding: '6px', textAlign: 'center', color: '#38bdf8', fontWeight: 700 }}>{k.octMtd}</td>
+                          <td style={{ padding: '6px', textAlign: 'center', color: '#cbd5e1' }}>{k.sep}</td>
+                          <td style={{ padding: '6px', textAlign: 'center', color: '#cbd5e1' }}>{k.aug}</td>
+                          <td style={{ padding: '6px', textAlign: 'center', color: '#cbd5e1' }}>{k.jul}</td>
+                          <td style={{ padding: '6px', textAlign: 'center', color: '#34d399', fontWeight: 700 }}>{k.momGw}</td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -334,18 +363,71 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Hourly Sales Pacing (09:00 AM to 05:00 AM) */}
-          <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px', marginBottom: '16px' }}>
-            <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#38bdf8', textTransform: 'uppercase' }}>
-              🕒 Hourly Sales Summary (09:00 AM to 05:00 AM)
-            </h3>
-            {renderHourlySalesChart()}
+          {/* AOV Bucket & Discount Bucket Analysis (Revenue Share | Orders) */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '14px', marginBottom: '16px' }}>
+            
+            {/* AOV Bucket Table */}
+            <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px' }}>
+              <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#f59e0b', textTransform: 'uppercase' }}>
+                💰 AOV Bucket Analysis (Rev Share | Orders)
+              </h3>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#b45309', color: '#ffffff' }}>
+                      {getAovColHeaders().map((h) => (
+                        <th key={h} style={{ padding: '6px 4px', textAlign: h === 'Bucket' ? 'left' : 'center' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {salesData?.aovBuckets?.map((row: any) => (
+                      <tr key={row.bucket} style={{ borderBottom: '1px solid #131c2e' }}>
+                        <td style={{ padding: '6px 4px', fontWeight: 700, color: '#ffffff' }}>{row.bucket}</td>
+                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>{row.col1}</td>
+                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>{row.col2}</td>
+                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#ffffff', fontWeight: 700 }}>{row.col3}</td>
+                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>{row.col4}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Discount Bucket Table */}
+            <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px' }}>
+              <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#f87171', textTransform: 'uppercase' }}>
+                🏷️ Discount Bucket Analysis (Rev Share | Orders)
+              </h3>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#b45309', color: '#ffffff' }}>
+                      {getAovColHeaders().map((h) => (
+                        <th key={h} style={{ padding: '6px 4px', textAlign: h === 'Bucket' ? 'left' : 'center' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {salesData?.discountBuckets?.map((row: any) => (
+                      <tr key={row.bucket} style={{ borderBottom: '1px solid #131c2e' }}>
+                        <td style={{ padding: '6px 4px', fontWeight: 700, color: '#ffffff' }}>{row.bucket}</td>
+                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>{row.col1}</td>
+                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>{row.col2}</td>
+                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#ffffff', fontWeight: 700 }}>{row.col3}</td>
+                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>{row.col4}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
 
-          {/* 2-Column Tables: Brand Summary & Source Summary */}
+          {/* Brand Summary & Source Summary */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px', marginBottom: '16px' }}>
-            
-            {/* Brand Summary */}
             <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px' }}>
               <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#f59e0b', textTransform: 'uppercase' }}>🏷️ Brand Summary</h3>
               <div style={{ overflowX: 'auto' }}>
@@ -374,7 +456,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Source Summary */}
             <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px' }}>
               <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#38bdf8', textTransform: 'uppercase' }}>🏷️ Source Summary</h3>
               <div style={{ overflowX: 'auto' }}>
@@ -402,13 +483,10 @@ export default function Home() {
                 </table>
               </div>
             </div>
-
           </div>
 
-          {/* Session Breakdowns: Brand Session & Region Session */}
+          {/* Session Summaries */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px', marginBottom: '16px' }}>
-            
-            {/* Brand Session Analysis */}
             <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px' }}>
               <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#f59e0b', textTransform: 'uppercase' }}>🍽️ Brand Session Analysis</h3>
               <div style={{ overflowX: 'auto' }}>
@@ -439,7 +517,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Region Session Analysis */}
             <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px' }}>
               <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#38bdf8', textTransform: 'uppercase' }}>🌍 Region Session Analysis</h3>
               <div style={{ overflowX: 'auto' }}>
@@ -469,13 +546,10 @@ export default function Home() {
                 </table>
               </div>
             </div>
-
           </div>
 
           {/* Top 10 & Bottom 10 Outlets */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px' }}>
-            
-            {/* Top 10 Stores */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px', marginBottom: '16px' }}>
             <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px' }}>
               <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#34d399', textTransform: 'uppercase' }}>🏆 Top 10 Stores (Rev)</h3>
               <div style={{ overflowX: 'auto' }}>
@@ -506,7 +580,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Bottom 10 Stores */}
             <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px' }}>
               <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#f87171', textTransform: 'uppercase' }}>⚠️ Bottom 10 Stores (Action Required)</h3>
               <div style={{ overflowX: 'auto' }}>
@@ -536,7 +609,41 @@ export default function Home() {
                 </table>
               </div>
             </div>
+          </div>
 
+          {/* Full Network Store Rankings */}
+          <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px', marginTop: '16px' }}>
+            <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#38bdf8', textTransform: 'uppercase' }}>
+              🏪 All Outlets Performance ({salesData?.allStores?.length || 0} Stores)
+            </h3>
+            <div style={{ overflowX: 'auto', maxHeight: '420px', overflowY: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
+                <thead style={{ position: 'sticky', top: 0, backgroundColor: '#1e293b' }}>
+                  <tr style={{ color: '#94a3b8' }}>
+                    <th style={{ padding: '6px 4px', textAlign: 'left' }}>#</th>
+                    <th style={{ padding: '6px 4px', textAlign: 'left' }}>Store Name</th>
+                    <th style={{ padding: '6px 4px', textAlign: 'center' }}>Type</th>
+                    <th style={{ padding: '6px 4px', textAlign: 'center' }}>Region</th>
+                    <th style={{ padding: '6px 4px', textAlign: 'center' }}>Net Revenue</th>
+                    <th style={{ padding: '6px 4px', textAlign: 'center' }}>Orders</th>
+                    <th style={{ padding: '6px 4px', textAlign: 'center' }}>AOV</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {salesData?.allStores?.map((s: any) => (
+                    <tr key={s.store} style={{ borderBottom: '1px solid #131c2e' }}>
+                      <td style={{ padding: '6px 4px', color: '#94a3b8' }}>{s.rank}</td>
+                      <td style={{ padding: '6px 4px', fontWeight: 600, color: '#ffffff' }}>{s.store}</td>
+                      <td style={{ padding: '6px 4px', textAlign: 'center', color: '#f59e0b' }}>{s.type}</td>
+                      <td style={{ padding: '6px 4px', textAlign: 'center', color: '#94a3b8' }}>{s.region}</td>
+                      <td style={{ padding: '6px 4px', textAlign: 'center', color: '#38bdf8', fontWeight: 700 }}>₹{s.rev}</td>
+                      <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>{s.orders}</td>
+                      <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>₹{s.aov}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
         </div>
@@ -544,7 +651,6 @@ export default function Home() {
         /* ======================= OPERATIONS & RATINGS VIEW ======================= */
         <div style={{ marginTop: '14px' }}>
           
-          {/* Operations Platform Slicer */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
             <div style={{ display: 'flex', backgroundColor: '#0f172a', padding: '3px', borderRadius: '8px', border: '1px solid #1f293d' }}>
               {(['Google', 'Swiggy', 'Zomato'] as Platform[]).map((p) => (
@@ -568,7 +674,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Operations Top KPI Cards */}
+          {/* Operations KPI Row */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginBottom: '14px' }}>
             <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '10px', padding: '12px' }}>
               <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase' }}>Net Sales</span>
@@ -650,74 +756,9 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Operations Rating Line Chart */}
-          <div style={{ marginBottom: '14px', backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#ffffff', textTransform: 'uppercase' }}>
-                {platform} Rating Trend
-              </span>
-
-              <div style={{ display: 'flex', backgroundColor: '#1e293b', padding: '2px', borderRadius: '6px' }}>
-                {(['day', 'week', 'month'] as ChartGranularity[]).map((g) => (
-                  <button
-                    key={g}
-                    onClick={() => setGranularity(g)}
-                    style={{
-                      backgroundColor: granularity === g ? '#f59e0b' : 'transparent',
-                      color: granularity === g ? '#000000' : '#94a3b8',
-                      border: 'none',
-                      borderRadius: '4px',
-                      padding: '3px 8px',
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      textTransform: 'capitalize',
-                    }}
-                  >
-                    {g}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* SVG Trend */}
-            <div style={{ width: '100%', overflowX: 'auto' }}>
-              <svg viewBox="0 0 800 180" style={{ minWidth: '600px', width: '100%', height: '170px' }}>
-                <line x1="40" y1="140" x2="760" y2="140" stroke="#1f293d" strokeWidth="1" />
-                {chartPoints.length > 0 && (
-                  <polyline
-                    fill="none"
-                    stroke="#f59e0b"
-                    strokeWidth="3"
-                    points={chartPoints.map((p: any, idx: number) => {
-                      const x = 40 + (idx * 720) / Math.max(1, chartPoints.length - 1);
-                      const y = 140 - ((parseFloat(p.rating) - 1) / 4) * 100;
-                      return `${x},${y}`;
-                    }).join(' ')}
-                  />
-                )}
-                {chartPoints.map((p: any, idx: number) => {
-                  const x = 40 + (idx * 720) / Math.max(1, chartPoints.length - 1);
-                  const y = 140 - ((parseFloat(p.rating) - 1) / 4) * 100;
-                  return (
-                    <g key={idx}>
-                      <circle cx={x} cy={y} r="4" fill="#f59e0b" stroke="#090d16" strokeWidth="2" />
-                      <text x={x} y={y - 8} fill="#ffffff" fontSize="10" fontWeight="bold" textAnchor="middle">
-                        {p.rating} ★
-                      </text>
-                      <text x={x} y="156" fill="#94a3b8" fontSize="9" textAnchor="middle">
-                        {p.label}
-                      </text>
-                    </g>
-                  );
-                })}
-              </svg>
-            </div>
-          </div>
-
-          {/* Main Performance Comparison Table */}
+          {/* Operations Performance Table */}
           {opsLoading ? (
-            <div style={{ padding: '30px', textAlign: 'center', color: '#64748b', fontSize: '12px' }}>Loading live operational data...</div>
+            <div style={{ padding: '30px', textAlign: 'center', color: '#64748b', fontSize: '12px' }}>Loading operational matrix...</div>
           ) : (
             <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', border: '1px solid #1f293d', borderRadius: '8px', marginBottom: '16px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '780px' }}>
@@ -803,47 +844,6 @@ export default function Home() {
                       <td style={{ padding: '6px 4px', textAlign: 'center', color: '#ffffff', fontWeight: 700 }}>{b.currIssueOrders?.toLocaleString()}</td>
                       <td style={{ padding: '6px 4px', textAlign: 'center', color: '#34d399' }}>{b.issueOrdersPct}</td>
                     </tr>
-                  ))}
-
-                  {/* Region Breakdown */}
-                  <tr style={{ backgroundColor: '#090d16' }}>
-                    <td colSpan={20} style={{ padding: '6px 10px', fontSize: '10px', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase' }}>
-                      Region Breakdown
-                    </td>
-                  </tr>
-                  {opsData?.performance?.regions?.map((rGroup: any) => (
-                    <React.Fragment key={rGroup.region.name}>
-                      <tr style={{ borderBottom: '1px solid #1f293d', backgroundColor: '#131c2e', fontSize: '11px', fontWeight: 700 }}>
-                        <td style={{ padding: '8px 10px', color: '#38bdf8' }}>{rGroup.region.name}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', backgroundColor: '#1e3a8a', color: '#93c5fd' }}>{rGroup.region.prevRating}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', backgroundColor: '#2563eb', color: '#ffffff' }}>{rGroup.region.currRating}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: parseFloat(rGroup.region.ratingDiff) < 0 ? '#f87171' : '#34d399' }}>{rGroup.region.ratingDiff}</td>
-                        {[1, 2, 3, 4, 5].map((s) => <td key={`p-${s}`} style={{ padding: '6px 3px', textAlign: 'center', color: '#cbd5e1' }}>{rGroup.region.prevStars[s]}</td>)}
-                        {[1, 2, 3, 4, 5].map((s) => <td key={`c-${s}`} style={{ padding: '6px 3px', textAlign: 'center', color: '#f3e8ff' }}>{rGroup.region.currStars[s]}</td>)}
-                        <td style={{ padding: '6px 4px', textAlign: 'center' }}>{rGroup.region.prevRatedOrders?.toLocaleString()}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#ffffff', fontWeight: 700 }}>{rGroup.region.currRatedOrders?.toLocaleString()}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: parseFloat(rGroup.region.ratedOrdersPct) >= 0 ? '#34d399' : '#f87171' }}>{rGroup.region.ratedOrdersPct}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center' }}>{rGroup.region.prevIssueOrders?.toLocaleString()}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#ffffff', fontWeight: 700 }}>{rGroup.region.currIssueOrders?.toLocaleString()}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#34d399' }}>{rGroup.region.issueOrdersPct}</td>
-                      </tr>
-                      {rGroup.brandBreakdown?.map((b: any) => (
-                        <tr key={b.name} style={{ borderBottom: '1px solid #1f293d', backgroundColor: '#0e1524', fontSize: '11px' }}>
-                          <td style={{ padding: '8px 10px', color: '#94a3b8', paddingLeft: '24px' }}>{b.name}</td>
-                          <td style={{ padding: '6px 4px', textAlign: 'center' }}>{b.prevRating}</td>
-                          <td style={{ padding: '6px 4px', textAlign: 'center', color: '#ffffff', fontWeight: 700 }}>{b.currRating}</td>
-                          <td style={{ padding: '6px 4px', textAlign: 'center', color: parseFloat(b.ratingDiff) < 0 ? '#f87171' : '#34d399' }}>{b.ratingDiff}</td>
-                          {[1, 2, 3, 4, 5].map((s) => <td key={`p-${s}`} style={{ padding: '6px 3px', textAlign: 'center', color: '#cbd5e1' }}>{b.prevStars[s]}</td>)}
-                          {[1, 2, 3, 4, 5].map((s) => <td key={`c-${s}`} style={{ padding: '6px 3px', textAlign: 'center', color: '#f3e8ff' }}>{b.currStars[s]}</td>)}
-                          <td style={{ padding: '6px 4px', textAlign: 'center' }}>{b.prevRatedOrders}</td>
-                          <td style={{ padding: '6px 4px', textAlign: 'center', color: '#ffffff' }}>{b.currRatedOrders}</td>
-                          <td style={{ padding: '6px 4px', textAlign: 'center' }}>{b.ratedOrdersPct}</td>
-                          <td style={{ padding: '6px 4px', textAlign: 'center' }}>{b.prevIssueOrders}</td>
-                          <td style={{ padding: '6px 4px', textAlign: 'center', color: '#ffffff' }}>{b.currIssueOrders}</td>
-                          <td style={{ padding: '6px 4px', textAlign: 'center' }}>{b.issueOrdersPct}</td>
-                        </tr>
-                      ))}
-                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
@@ -932,7 +932,6 @@ export default function Home() {
                 <span style={{ fontSize: '10px', color: '#94a3b8' }}>Verified customer feedback with ratings</span>
               </div>
 
-              {/* Star Filter Pills */}
               <div style={{ display: 'flex', gap: '4px', backgroundColor: '#131c2e', padding: '3px', borderRadius: '6px' }}>
                 {(['ALL', 5, 4, 3, 2, 1] as const).map((star) => (
                   <button
@@ -955,7 +954,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Comment Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '8px' }}>
               {filteredComments.length > 0 ? (
                 filteredComments.map((rev: any, idx: number) => (
