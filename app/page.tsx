@@ -6,7 +6,6 @@ type SalesSubView = 'daily' | 'weekly' | 'monthly';
 type Platform = 'Google' | 'Swiggy' | 'Zomato';
 type ChartGranularity = 'day' | 'week' | 'month';
 
-
 export default function Home() {
   const [mainView, setMainView] = useState<MainView>('Operations');
 
@@ -30,7 +29,26 @@ export default function Home() {
   const [salesData, setSalesData] = useState<any>(null);
   const [salesLoading, setSalesLoading] = useState(true);
 
-  // Load Operations Data
+  // KPT & O2D Hub State
+  const [kptPlatform, setKptPlatform] = useState('Swiggy');
+  const [kptRegion, setKptRegion] = useState('KA');
+  const [kptBrand, setKptBrand] = useState('ALL');
+  const [kptData, setKptData] = useState<any>(null);
+
+  // Persistent Live Hourly Sales Poller (Syncs with rista_live.py)
+  useEffect(() => {
+    const fetchSalesLive = () => {
+      fetch('/api/sales?view=daily')
+        .then((res) => res.json())
+        .then((json) => setSalesData(json))
+        .catch(() => {});
+    };
+    fetchSalesLive();
+    const interval = setInterval(fetchSalesLive, 300000); // Polls every 5 minutes
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch Google Rating baseline
   useEffect(() => {
     fetch('/api/ratings?platform=google')
       .then((res) => res.json())
@@ -42,6 +60,7 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
+  // Fetch Operations Data
   useEffect(() => {
     if (mainView === 'Operations') {
       setOpsLoading(true);
@@ -61,22 +80,7 @@ export default function Home() {
     }
   }, [mainView, platform, selectedBrand, selectedRegion, selectedStore]);
 
-   //KPT and O2D
-  useEffect(() => {
-    if (mainView === 'KptO2d') {
-      const params = new URLSearchParams({
-        platform: kptPlatform,
-        region: kptRegion,
-        brand: kptBrand,
-      });
-      fetch(`/api/kpt-o2d?${params.toString()}`)
-        .then((res) => res.json())
-        .then((json) => setKptData(json))
-        .catch(() => {});
-    }
-  }, [mainView, kptPlatform, kptRegion, kptBrand]);
-  
-  // Load Sales Data
+  // Fetch Sales Data when parameters change
   useEffect(() => {
     if (mainView === 'Sales') {
       setSalesLoading(true);
@@ -96,6 +100,21 @@ export default function Home() {
         .catch(() => setSalesLoading(false));
     }
   }, [mainView, salesSubView, salesBrand, salesRegion, salesSource, salesSession]);
+
+  // Fetch KPT & O2D Data
+  useEffect(() => {
+    if (mainView === 'KptO2d') {
+      const params = new URLSearchParams({
+        platform: kptPlatform,
+        region: kptRegion,
+        brand: kptBrand,
+      });
+      fetch(`/api/kpt-o2d?${params.toString()}`)
+        .then((res) => res.json())
+        .then((json) => setKptData(json))
+        .catch(() => {});
+    }
+  }, [mainView, kptPlatform, kptRegion, kptBrand]);
 
   const pLabel = opsData?.previousLabel || 'Sep-26';
   const cLabel = opsData?.currentLabel || 'Oct-26';
@@ -131,10 +150,61 @@ export default function Home() {
     return ['Bucket', 'Yesterday', 'Last Week', 'MTD', 'LMTD'];
   };
 
+  const renderDataRow = (row: any, isSubRow = false) => {
+    const isNeg = parseFloat(row.ratingDiff || '0') < 0;
+    const isOrderPos = parseFloat(row.ratedOrdersPct || '0') >= 0;
+    const isIssuePos = parseFloat(row.issueOrdersPct || '0') <= 0;
+
+    return (
+      <tr
+        key={row.name}
+        style={{
+          borderBottom: '1px solid #1f293d',
+          backgroundColor: isSubRow ? '#0e1524' : '#131c2e',
+          fontSize: '11px',
+          fontWeight: isSubRow ? 400 : 600,
+        }}
+      >
+        <td style={{ padding: '8px 10px', color: isSubRow ? '#94a3b8' : '#ffffff', paddingLeft: isSubRow ? '22px' : '10px', whiteSpace: 'nowrap' }}>
+          {row.name}
+        </td>
+        <td style={{ padding: '6px 4px', textAlign: 'center', backgroundColor: '#1e3a8a', color: '#93c5fd', fontWeight: 700 }}>{row.prevRating}</td>
+        <td style={{ padding: '6px 4px', textAlign: 'center', backgroundColor: '#2563eb', color: '#ffffff', fontWeight: 700 }}>{row.currRating}</td>
+        <td style={{ padding: '6px 4px', textAlign: 'center', color: isNeg ? '#f87171' : '#34d399', fontWeight: 700, backgroundColor: isNeg ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)' }}>
+          {row.ratingDiff}
+        </td>
+
+        {[1, 2, 3, 4, 5].map((s) => (
+          <td key={`ps-${s}`} style={{ padding: '6px 3px', textAlign: 'center', color: '#cbd5e1', backgroundColor: '#1a102f' }}>
+            {row.prevStars ? row.prevStars[s] : '0%'}
+          </td>
+        ))}
+
+        {[1, 2, 3, 4, 5].map((s) => (
+          <td key={`cs-${s}`} style={{ padding: '6px 3px', textAlign: 'center', color: '#f3e8ff', backgroundColor: '#2e1065', fontWeight: s === 5 ? 700 : 400 }}>
+            {row.currStars ? row.currStars[s] : '0%'}
+          </td>
+        ))}
+
+        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>{row.prevRatedOrders?.toLocaleString()}</td>
+        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#ffffff', fontWeight: 700 }}>{row.currRatedOrders?.toLocaleString()}</td>
+        <td style={{ padding: '6px 4px', textAlign: 'center', color: isOrderPos ? '#34d399' : '#f87171', fontWeight: 700 }}>
+          {row.ratedOrdersPct}
+        </td>
+
+        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>{row.prevIssueOrders?.toLocaleString()}</td>
+        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#ffffff', fontWeight: 700 }}>{row.currIssueOrders?.toLocaleString()}</td>
+        <td style={{ padding: '6px 4px', textAlign: 'center', color: isIssuePos ? '#34d399' : '#f87171', fontWeight: 700, backgroundColor: isIssuePos ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)' }}>
+          {row.issueOrdersPct}
+        </td>
+      </tr>
+    );
+  };
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#070b12', color: '#f3f4f6', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '14px', boxSizing: 'border-box' }}>
       
-      {/* Top Header & Main Mode Toggle */}
+      {/* Top Main Navigation Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1f293d', paddingBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: '#ffffff' }}>Frozen Bottle Operations Hub</h1>
@@ -143,6 +213,7 @@ export default function Home() {
           </p>
         </div>
 
+        {/* 3 Main View Tabs */}
         <div style={{ display: 'flex', backgroundColor: '#0f172a', padding: '4px', borderRadius: '10px', border: '1px solid #1f293d' }}>
           <button
             onClick={() => setMainView('Operations')}
@@ -151,13 +222,28 @@ export default function Home() {
               color: '#ffffff',
               border: 'none',
               borderRadius: '7px',
-              padding: '6px 16px',
+              padding: '6px 14px',
               fontSize: '11px',
               fontWeight: 700,
               cursor: 'pointer',
             }}
           >
             📊 Operations & Ratings
+          </button>
+          <button
+            onClick={() => setMainView('Sales')}
+            style={{
+              backgroundColor: mainView === 'Sales' ? '#10b981' : 'transparent',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '7px',
+              padding: '6px 14px',
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            📈 Sales Hub
           </button>
           <button
             onClick={() => setMainView('KptO2d')}
@@ -174,28 +260,62 @@ export default function Home() {
           >
             ⏱️ KPT & O2D
           </button>
-          <button
-            onClick={() => setMainView('Sales')}
-            style={{
-              backgroundColor: mainView === 'Sales' ? '#10b981' : 'transparent',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '7px',
-              padding: '6px 16px',
-              fontSize: '11px',
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
-          >
-            📈 Sales Hub
-          </button>
         </div>
       </div>
 
-      {/* ======================= SALES DASHBOARD VIEW ======================= */}
-      {mainView === 'Sales' ? (
+      {/* 🔴 LIVE SALES TOP TRACKER (Updated Hourly by rista_live.py) */}
+      <div
+        style={{
+          marginTop: '12px',
+          backgroundColor: '#0c1527',
+          border: '1px solid #1e3a8a',
+          borderRadius: '10px',
+          padding: '10px 14px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '12px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block', boxShadow: '0 0 8px #10b981' }}></span>
+            <strong style={{ fontSize: '11px', color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Rista Live Stream
+            </strong>
+          </span>
+          <span style={{ fontSize: '11px', color: '#64748b' }}>|</span>
+          <span style={{ fontSize: '11px', color: '#cbd5e1' }}>
+            Data Till: <strong style={{ color: '#ffffff' }}>{salesData?.dataTill || '09 Oct 2026 Live'}</strong>
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          <div style={{ fontSize: '11px' }}>
+            <span style={{ color: '#94a3b8' }}>Today Net: </span>
+            <strong style={{ color: '#38bdf8', fontSize: '13px' }}>₹ {salesData?.kpis?.netRev || '16,54,290.98'}</strong>
+          </div>
+          <div style={{ fontSize: '11px' }}>
+            <span style={{ color: '#94a3b8' }}>Orders: </span>
+            <strong style={{ color: '#ffffff', fontSize: '13px' }}>{salesData?.kpis?.orders || '6,694'}</strong>
+          </div>
+          <div style={{ fontSize: '11px' }}>
+            <span style={{ color: '#94a3b8' }}>AOV: </span>
+            <strong style={{ color: '#f59e0b', fontSize: '13px' }}>₹ {salesData?.kpis?.aov || '247.13'}</strong>
+          </div>
+          <div style={{ fontSize: '11px' }}>
+            <span style={{ color: '#94a3b8' }}>Dis%: </span>
+            <strong style={{ color: '#f87171', fontSize: '13px' }}>{salesData?.kpis?.disPct || '-38.03%'}</strong>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 1. SALES HUB VIEW                                                         */}
+      {/* ========================================================================= */}
+      {mainView === 'Sales' && (
         <div style={{ marginTop: '14px' }}>
-          
           {/* Top Bar: Insight & Sub-View Slicer (Daily, Weekly, Monthly) */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -205,7 +325,6 @@ export default function Home() {
               </span>
             </div>
 
-            {/* Sales Sub-View Slicer: Daily | Weekly | Monthly */}
             <div style={{ display: 'flex', backgroundColor: '#0f172a', padding: '3px', borderRadius: '8px', border: '1px solid #1f293d' }}>
               {(['daily', 'weekly', 'monthly'] as SalesSubView[]).map((v) => (
                 <button
@@ -315,7 +434,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Dynamic Sales KPI Matrix (Changes per Daily / Weekly / Monthly mode) */}
+          {/* Dynamic Sales KPI Matrix */}
           <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px', marginBottom: '16px' }}>
             <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#ffffff', textTransform: 'uppercase' }}>
               📈 {salesSubView.toUpperCase()} SALES SUMMARY
@@ -394,10 +513,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* AOV Bucket & Discount Bucket Analysis (Revenue Share | Orders) */}
+          {/* AOV Bucket & Discount Bucket Tables (Rev Share | Orders) */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '14px', marginBottom: '16px' }}>
-            
-            {/* AOV Bucket Table */}
             <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px' }}>
               <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#f59e0b', textTransform: 'uppercase' }}>
                 💰 AOV Bucket Analysis (Rev Share | Orders)
@@ -426,7 +543,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Discount Bucket Table */}
             <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px' }}>
               <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#f87171', textTransform: 'uppercase' }}>
                 🏷️ Discount Bucket Analysis (Rev Share | Orders)
@@ -448,192 +564,6 @@ export default function Home() {
                         <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>{row.col2}</td>
                         <td style={{ padding: '6px 4px', textAlign: 'center', color: '#ffffff', fontWeight: 700 }}>{row.col3}</td>
                         <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>{row.col4}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Brand Summary & Source Summary */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px', marginBottom: '16px' }}>
-            <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px' }}>
-              <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#f59e0b', textTransform: 'uppercase' }}>🏷️ Brand Summary</h3>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
-                  <thead>
-                    <tr style={{ color: '#94a3b8', borderBottom: '1px solid #1f293d' }}>
-                      <th style={{ padding: '6px 4px', textAlign: 'left' }}>Brand</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Today Rev</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>LW Rev</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Growth %</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Today Dis%</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {salesData?.brandSummary?.map((b: any) => (
-                      <tr key={b.brand} style={{ borderBottom: '1px solid #131c2e' }}>
-                        <td style={{ padding: '6px 4px', fontWeight: 600, color: '#ffffff' }}>{b.brand}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>₹{b.todayRev}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#94a3b8' }}>₹{b.lwRev}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: parseFloat(b.growth) >= 0 ? '#34d399' : '#f87171', fontWeight: 700 }}>{b.growth}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>{b.todayDis}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px' }}>
-              <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#38bdf8', textTransform: 'uppercase' }}>🏷️ Source Summary</h3>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
-                  <thead>
-                    <tr style={{ color: '#94a3b8', borderBottom: '1px solid #1f293d' }}>
-                      <th style={{ padding: '6px 4px', textAlign: 'left' }}>Source</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Today Rev</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>LW Rev</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Growth %</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Today Dis%</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {salesData?.sourceSummary?.map((s: any) => (
-                      <tr key={s.source} style={{ borderBottom: '1px solid #131c2e' }}>
-                        <td style={{ padding: '6px 4px', fontWeight: 600, color: '#ffffff' }}>{s.source}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>₹{s.todayRev}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#94a3b8' }}>₹{s.lwRev}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: parseFloat(s.growth) >= 0 ? '#34d399' : '#f87171', fontWeight: 700 }}>{s.growth}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>{s.todayDis}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          {/* Session Summaries */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px', marginBottom: '16px' }}>
-            <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px' }}>
-              <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#f59e0b', textTransform: 'uppercase' }}>🍽️ Brand Session Analysis</h3>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', minWidth: '450px' }}>
-                  <thead>
-                    <tr style={{ color: '#94a3b8', borderBottom: '1px solid #1f293d' }}>
-                      <th style={{ padding: '6px 4px', textAlign: 'left' }}>Brand</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Breakfast</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Lunch</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Snacks</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Dinner</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Post Dinner</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {salesData?.brandSession?.map((bs: any) => (
-                      <tr key={bs.brand} style={{ borderBottom: '1px solid #131c2e' }}>
-                        <td style={{ padding: '6px 4px', fontWeight: 600, color: '#ffffff' }}>{bs.brand}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center' }}>₹{bs.breakfast}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center' }}>₹{bs.lunch}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center' }}>₹{bs.snacks}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center' }}>₹{bs.dinner}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center' }}>₹{bs.postDinner}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px' }}>
-              <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#38bdf8', textTransform: 'uppercase' }}>🌍 Region Session Analysis</h3>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', minWidth: '450px' }}>
-                  <thead>
-                    <tr style={{ color: '#94a3b8', borderBottom: '1px solid #1f293d' }}>
-                      <th style={{ padding: '6px 4px', textAlign: 'left' }}>Region</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Breakfast</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Lunch</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Snacks</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Dinner</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Post Dinner</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {salesData?.regionSession?.map((rs: any) => (
-                      <tr key={rs.region} style={{ borderBottom: '1px solid #131c2e' }}>
-                        <td style={{ padding: '6px 4px', fontWeight: 600, color: '#ffffff' }}>{rs.region}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center' }}>₹{rs.breakfast}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center' }}>₹{rs.lunch}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center' }}>₹{rs.snacks}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center' }}>₹{rs.dinner}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center' }}>₹{rs.postDinner}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          {/* Top 10 & Bottom 10 Outlets */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px', marginBottom: '16px' }}>
-            <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px' }}>
-              <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#34d399', textTransform: 'uppercase' }}>🏆 Top 10 Stores (Rev)</h3>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
-                  <thead>
-                    <tr style={{ color: '#94a3b8', borderBottom: '1px solid #1f293d' }}>
-                      <th style={{ padding: '6px 4px', textAlign: 'left' }}>#</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'left' }}>Store</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Region</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Net Rev</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Orders</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>AOV</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {salesData?.topStores?.map((s: any) => (
-                      <tr key={s.store} style={{ borderBottom: '1px solid #131c2e' }}>
-                        <td style={{ padding: '6px 4px', color: '#f59e0b', fontWeight: 700 }}>{s.rank}</td>
-                        <td style={{ padding: '6px 4px', fontWeight: 600, color: '#ffffff' }}>{s.store}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#94a3b8' }}>{s.region}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#34d399', fontWeight: 700 }}>₹{s.rev}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>{s.orders}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>₹{s.aov}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px' }}>
-              <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#f87171', textTransform: 'uppercase' }}>⚠️ Bottom 10 Stores (Action Required)</h3>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
-                  <thead>
-                    <tr style={{ color: '#94a3b8', borderBottom: '1px solid #1f293d' }}>
-                      <th style={{ padding: '6px 4px', textAlign: 'left' }}>#</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'left' }}>Store</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Region</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Net Rev</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>Orders</th>
-                      <th style={{ padding: '6px 4px', textAlign: 'center' }}>AOV</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {salesData?.bottomStores?.map((s: any) => (
-                      <tr key={s.store} style={{ borderBottom: '1px solid #131c2e' }}>
-                        <td style={{ padding: '6px 4px', color: '#f87171', fontWeight: 700 }}>{s.rank}</td>
-                        <td style={{ padding: '6px 4px', fontWeight: 600, color: '#ffffff' }}>{s.store}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#94a3b8' }}>{s.region}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#f87171', fontWeight: 700 }}>₹{s.rev}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>{s.orders}</td>
-                        <td style={{ padding: '6px 4px', textAlign: 'center', color: '#cbd5e1' }}>₹{s.aov}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -676,12 +606,15 @@ export default function Home() {
               </table>
             </div>
           </div>
-
         </div>
-      ) : (
-        /* ======================= OPERATIONS & RATINGS VIEW ======================= */
+      )}
+
+      {/* ========================================================================= */}
+      {/* 2. OPERATIONS & RATINGS VIEW                                              */}
+      {/* ========================================================================= */}
+      {mainView === 'Operations' && (
         <div style={{ marginTop: '14px' }}>
-          
+          {/* Operations Platform Selector */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
             <div style={{ display: 'flex', backgroundColor: '#0f172a', padding: '3px', borderRadius: '8px', border: '1px solid #1f293d' }}>
               {(['Google', 'Swiggy', 'Zomato'] as Platform[]).map((p) => (
@@ -705,7 +638,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Operations KPI Row */}
+          {/* Top KPI Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginBottom: '14px' }}>
             <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '10px', padding: '12px' }}>
               <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase' }}>Net Sales</span>
@@ -748,7 +681,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Operations Slicers Row */}
+          {/* Slicers Row */}
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', backgroundColor: '#0f172a', padding: '10px', borderRadius: '10px', border: '1px solid #1f293d', marginBottom: '14px' }}>
             <div style={{ flex: '1 1 100px' }}>
               <select
@@ -787,7 +720,71 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Operations Performance Table */}
+          {/* Trend Line Chart */}
+          <div style={{ marginBottom: '14px', backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#ffffff', textTransform: 'uppercase' }}>
+                {platform} Rating Trend
+              </span>
+
+              <div style={{ display: 'flex', backgroundColor: '#1e293b', padding: '2px', borderRadius: '6px' }}>
+                {(['day', 'week', 'month'] as ChartGranularity[]).map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setGranularity(g)}
+                    style={{
+                      backgroundColor: granularity === g ? '#f59e0b' : 'transparent',
+                      color: granularity === g ? '#000000' : '#94a3b8',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '3px 8px',
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      textTransform: 'capitalize',
+                    }}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ width: '100%', overflowX: 'auto' }}>
+              <svg viewBox="0 0 800 180" style={{ minWidth: '600px', width: '100%', height: '170px' }}>
+                <line x1="40" y1="140" x2="760" y2="140" stroke="#1f293d" strokeWidth="1" />
+                {chartPoints.length > 0 && (
+                  <polyline
+                    fill="none"
+                    stroke="#f59e0b"
+                    strokeWidth="3"
+                    points={chartPoints.map((p: any, idx: number) => {
+                      const x = 40 + (idx * 720) / Math.max(1, chartPoints.length - 1);
+                      const y = 140 - ((parseFloat(p.rating) - 1) / 4) * 100;
+                      return `${x},${y}`;
+                    }).join(' ')}
+                  />
+                )}
+                {chartPoints.map((p: any, idx: number) => {
+                  const x = 40 + (idx * 720) / Math.max(1, chartPoints.length - 1);
+                  const y = 140 - ((parseFloat(p.rating) - 1) / 4) * 100;
+                  return (
+                    <g key={idx}>
+                      <circle cx={x} cy={y} r="4" fill="#f59e0b" stroke="#090d16" strokeWidth="2" />
+                      <text x={x} y={y - 8} fill="#ffffff" fontSize="10" fontWeight="bold" textAnchor="middle">
+                        {p.rating} ★
+                      </text>
+                      <text x={x} y="156" fill="#94a3b8" fontSize="9" textAnchor="middle">
+                        {p.label}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+          </div>
+
+          {/* Main Performance Comparison Table */}
           {opsLoading ? (
             <div style={{ padding: '30px', textAlign: 'center', color: '#64748b', fontSize: '12px' }}>Loading operational matrix...</div>
           ) : (
@@ -837,44 +834,25 @@ export default function Home() {
                   </tr>
                 </thead>
                 <tbody>
-                  {opsData?.performance?.overall && (
-                    <tr style={{ borderBottom: '1px solid #1f293d', backgroundColor: '#131c2e', fontSize: '11px', fontWeight: 600 }}>
-                      <td style={{ padding: '8px 10px', color: '#ffffff' }}>Average</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center', backgroundColor: '#1e3a8a', color: '#93c5fd' }}>{opsData.performance.overall.prevRating}</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center', backgroundColor: '#2563eb', color: '#ffffff' }}>{opsData.performance.overall.currRating}</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center', color: parseFloat(opsData.performance.overall.ratingDiff) < 0 ? '#f87171' : '#34d399' }}>{opsData.performance.overall.ratingDiff}</td>
-                      {[1, 2, 3, 4, 5].map((s) => <td key={`p-${s}`} style={{ padding: '6px 3px', textAlign: 'center', color: '#cbd5e1' }}>{opsData.performance.overall.prevStars[s]}</td>)}
-                      {[1, 2, 3, 4, 5].map((s) => <td key={`c-${s}`} style={{ padding: '6px 3px', textAlign: 'center', color: '#f3e8ff' }}>{opsData.performance.overall.currStars[s]}</td>)}
-                      <td style={{ padding: '6px 4px', textAlign: 'center' }}>{opsData.performance.overall.prevRatedOrders?.toLocaleString()}</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center', color: '#ffffff', fontWeight: 700 }}>{opsData.performance.overall.currRatedOrders?.toLocaleString()}</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center', color: '#34d399' }}>{opsData.performance.overall.ratedOrdersPct}</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center' }}>{opsData.performance.overall.prevIssueOrders?.toLocaleString()}</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center', color: '#ffffff', fontWeight: 700 }}>{opsData.performance.overall.currIssueOrders?.toLocaleString()}</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center', color: '#34d399' }}>{opsData.performance.overall.issueOrdersPct}</td>
-                    </tr>
-                  )}
+                  {opsData?.performance?.overall && renderDataRow(opsData.performance.overall)}
 
-                  {/* Brand Breakdown */}
                   <tr style={{ backgroundColor: '#090d16' }}>
                     <td colSpan={20} style={{ padding: '6px 10px', fontSize: '10px', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase' }}>
                       Brand Breakdown
                     </td>
                   </tr>
-                  {opsData?.performance?.brands?.map((b: any) => (
-                    <tr key={b.name} style={{ borderBottom: '1px solid #1f293d', backgroundColor: '#131c2e', fontSize: '11px' }}>
-                      <td style={{ padding: '8px 10px', color: '#ffffff' }}>{b.name}</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center', backgroundColor: '#1e3a8a', color: '#93c5fd' }}>{b.prevRating}</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center', backgroundColor: '#2563eb', color: '#ffffff' }}>{b.currRating}</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center', color: parseFloat(b.ratingDiff) < 0 ? '#f87171' : '#34d399' }}>{b.ratingDiff}</td>
-                      {[1, 2, 3, 4, 5].map((s) => <td key={`p-${s}`} style={{ padding: '6px 3px', textAlign: 'center', color: '#cbd5e1' }}>{b.prevStars[s]}</td>)}
-                      {[1, 2, 3, 4, 5].map((s) => <td key={`c-${s}`} style={{ padding: '6px 3px', textAlign: 'center', color: '#f3e8ff' }}>{b.currStars[s]}</td>)}
-                      <td style={{ padding: '6px 4px', textAlign: 'center' }}>{b.prevRatedOrders?.toLocaleString()}</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center', color: '#ffffff', fontWeight: 700 }}>{b.currRatedOrders?.toLocaleString()}</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center', color: parseFloat(b.ratedOrdersPct) >= 0 ? '#34d399' : '#f87171' }}>{b.ratedOrdersPct}</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center' }}>{b.prevIssueOrders?.toLocaleString()}</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center', color: '#ffffff', fontWeight: 700 }}>{b.currIssueOrders?.toLocaleString()}</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center', color: '#34d399' }}>{b.issueOrdersPct}</td>
-                    </tr>
+                  {opsData?.performance?.brands?.map((b: any) => renderDataRow(b))}
+
+                  <tr style={{ backgroundColor: '#090d16' }}>
+                    <td colSpan={20} style={{ padding: '6px 10px', fontSize: '10px', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase' }}>
+                      Region Breakdown
+                    </td>
+                  </tr>
+                  {opsData?.performance?.regions?.map((rGroup: any) => (
+                    <React.Fragment key={rGroup.region.name}>
+                      {renderDataRow(rGroup.region)}
+                      {rGroup.brandBreakdown?.map((b: any) => renderDataRow(b, true))}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
@@ -1042,11 +1020,12 @@ export default function Home() {
               )}
             </div>
           </div>
-
         </div>
       )}
-      
-    {/* PASTE THE KPT & O2D BLOCK RIGHT HERE */}
+
+      {/* ========================================================================= */}
+      {/* 3. KPT & O2D VIEW                                                         */}
+      {/* ========================================================================= */}
       {mainView === 'KptO2d' && (
         <div style={{ marginTop: '14px' }}>
           {/* Filters: Platform, Region, Brand */}
@@ -1151,8 +1130,8 @@ export default function Home() {
                 </thead>
                 <tbody>
                   {kptData?.stores?.map((st: any) => {
-                    const kptExceed = st.ftdKpt > 12.0; // Base: 12m
-                    const o2dExceed = st.ftdO2d > 30.0; // Base: 30m
+                    const kptExceed = st.ftdKpt > 12.0; // Base: 12 mins
+                    const o2dExceed = st.ftdO2d > 30.0; // Base: 30 mins
                     const mtdKptExceed = st.mtdKpt > 12.0;
                     const mtdO2dExceed = st.mtdO2d > 30.0;
 
