@@ -1,9 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 60;
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const viewType = (searchParams.get('view') || 'daily').toLowerCase();
   const brand = searchParams.get('brand') || 'ALL';
@@ -76,19 +75,19 @@ export async function GET(req: Request) {
   ];
 
   const brandSummary = [
-    { brand: 'Frozen Bottle', todayRev: '1,361,945.20', lwRev: '1,527,938.74', growth: '-10.86%', todayDis: '-38.86%', lwDis: '-33.95%', disChange: '-4.91%' },
-    { brand: 'Madno', todayRev: '217,070.66', lwRev: '248,423.59', growth: '-12.62%', todayDis: '-36.72%', lwDis: '-35.07%', disChange: '-1.65%' },
-    { brand: 'Lubov', todayRev: '41,896.73', lwRev: '23,669.96', growth: '+77.00%', todayDis: '-9.20%', lwDis: '-22.00%', disChange: '+12.81%' },
-    { brand: 'Boba Bar', todayRev: '33,378.39', lwRev: '30,577.34', growth: '+9.16%', todayDis: '-37.66%', lwDis: '-37.46%', disChange: '-0.20%' },
+    { brand: 'Frozen Bottle', todayRev: fmt(1361945.20 * multiplier), lwRev: '1,527,938.74', growth: '-10.86%', todayDis: '-38.86%', lwDis: '-33.95%', disChange: '-4.91%' },
+    { brand: 'Madno', todayRev: fmt(217070.66 * multiplier), lwRev: '248,423.59', growth: '-12.62%', todayDis: '-36.72%', lwDis: '-35.07%', disChange: '-1.65%' },
+    { brand: 'Lubov', todayRev: fmt(41896.73 * multiplier), lwRev: '23,669.96', growth: '+77.00%', todayDis: '-9.20%', lwDis: '-22.00%', disChange: '+12.81%' },
+    { brand: 'Boba Bar', todayRev: fmt(33378.39 * multiplier), lwRev: '30,577.34', growth: '+9.16%', todayDis: '-37.66%', lwDis: '-37.46%', disChange: '-0.20%' },
   ];
 
   const sourceSummary = [
-    { source: 'In Store', todayRev: '413,067.33', lwRev: '327,500.62', growth: '+26.13%', todayDis: '-35.11%', lwDis: '-4.75%', disChange: '-30.36%' },
-    { source: 'Swiggy', todayRev: '712,060.43', lwRev: '796,805.36', growth: '-10.64%', todayDis: '-38.59%', lwDis: '-37.58%', disChange: '-1.01%' },
-    { source: 'Zomato', todayRev: '502,321.15', lwRev: '578,142.08', growth: '-13.11%', todayDis: '-39.12%', lwDis: '-38.22%', disChange: '-0.90%' },
-    { source: 'Ownly', todayRev: '25,019.70', lwRev: '27,602.03', growth: '-9.36%', todayDis: '-3.25%', lwDis: '0.00%', disChange: '-3.25%' },
-    { source: 'Magicpin', todayRev: '1,459.12', lwRev: '408.81', growth: '+256.92%', todayDis: '-47.54%', lwDis: '-51.31%', disChange: '+3.77%' },
-    { source: 'Website', todayRev: '1,522.85', lwRev: '1,580.55', growth: '-3.65%', todayDis: '0.00%', lwDis: '0.00%', disChange: '0.00%' },
+    { source: 'In Store', todayRev: fmt(413067.33 * multiplier), lwRev: '327,500.62', growth: '+26.13%', todayDis: '-35.11%', lwDis: '-4.75%', disChange: '-30.36%' },
+    { source: 'Swiggy', todayRev: fmt(712060.43 * multiplier), lwRev: '796,805.36', growth: '-10.64%', todayDis: '-38.59%', lwDis: '-37.58%', disChange: '-1.01%' },
+    { source: 'Zomato', todayRev: fmt(502321.15 * multiplier), lwRev: '578,142.08', growth: '-13.11%', todayDis: '-39.12%', lwDis: '-38.22%', disChange: '-0.90%' },
+    { source: 'Ownly', todayRev: fmt(25019.70 * multiplier), lwRev: '27,602.03', growth: '-9.36%', todayDis: '-3.25%', lwDis: '0.00%', disChange: '-3.25%' },
+    { source: 'Magicpin', todayRev: fmt(1459.12 * multiplier), lwRev: '408.81', growth: '+256.92%', todayDis: '-47.54%', lwDis: '-51.31%', disChange: '+3.77%' },
+    { source: 'Website', todayRev: fmt(1522.85 * multiplier), lwRev: '1,580.55', growth: '-3.65%', todayDis: '0.00%', lwDis: '0.00%', disChange: '0.00%' },
   ];
 
   const brandSession = [
@@ -105,37 +104,40 @@ export async function GET(req: Request) {
     { region: 'Kerela', breakfast: '2,631.00', lunch: '15,022.54', snacks: '14,029.53', dinner: '25,305.78', postDinner: '4,979.21', bfGw: '-54.24%', luGw: '-38.76%', snGw: '-13.99%', diGw: '-9.48%', pdGw: '-39.98%' },
   ];
 
-  const allStoresList = [
-    { rank: 1, store: 'Indiranagar - CK', region: 'KA', type: 'COCO', rev: '68,450.00', orders: 275, aov: '248.91' },
-    { rank: 2, store: 'Koramangala 5th Block', region: 'KA', type: 'COCO', rev: '61,220.00', orders: 242, aov: '252.98' },
-    { rank: 3, store: 'BTM Layout', region: 'KA', type: 'COCO', rev: '58,100.00', orders: 238, aov: '244.12' },
-    { rank: 4, store: 'Whitefield', region: 'KA', type: 'COCO', rev: '54,920.00', orders: 215, aov: '255.44' },
-    { rank: 5, store: 'HSR Layout', region: 'KA', type: 'COCO', rev: '51,340.00', orders: 204, aov: '251.67' },
-    { rank: 6, store: 'Bandra West', region: 'MH', type: 'COCO', rev: '49,800.00', orders: 188, aov: '264.89' },
-    { rank: 7, store: 'Khar', region: 'MH', type: 'COCO', rev: '46,250.00', orders: 176, aov: '262.78' },
-    { rank: 8, store: 'Anna Nagar', region: 'TN', type: 'COCO', rev: '44,120.00', orders: 182, aov: '242.42' },
-    { rank: 9, store: 'Alwarpet', region: 'TN', type: 'COCO', rev: '42,890.00', orders: 169, aov: '253.79' },
-    { rank: 10, store: 'Viman Nagar', region: 'MH', type: 'COCO', rev: '39,450.00', orders: 155, aov: '254.52' },
-    { rank: 11, store: 'AECS Layout', region: 'KA', type: 'COCO', rev: '36,120.00', orders: 144, aov: '250.83' },
-    { rank: 12, store: 'Jayanagar 4th Block', region: 'KA', type: 'COCO', rev: '34,800.00', orders: 139, aov: '250.36' },
-    { rank: 13, store: 'Mulund', region: 'MH', type: 'COCO', rev: '32,450.00', orders: 131, aov: '247.71' },
-    { rank: 14, store: 'Frazer Town', region: 'KA', type: 'COCO', rev: '29,810.00', orders: 122, aov: '244.34' },
-    { rank: 15, store: 'Malleswaram', region: 'KA', type: 'COCO', rev: '28,120.00', orders: 115, aov: '244.52' },
-    { rank: 16, store: 'Marol - CF CK', region: 'MH', type: 'COCO', rev: '25,400.00', orders: 104, aov: '244.23' },
-    { rank: 17, store: 'Channasandra', region: 'KA', type: 'COCO', rev: '22,100.00', orders: 92, aov: '240.22' },
-    { rank: 18, store: 'Bel Road', region: 'KA', type: 'COCO', rev: '19,840.00', orders: 81, aov: '244.94' },
-    { rank: 19, store: 'Electronic City', region: 'KA', type: 'COCO', rev: '17,210.00', orders: 72, aov: '239.03' },
-    { rank: 20, store: 'Manipal', region: 'KA', type: 'COCO', rev: '9,840.00', orders: 42, aov: '234.29' },
-    { rank: 21, store: 'Avadi', region: 'TN', type: 'COCO', rev: '9,120.00', orders: 39, aov: '233.85' },
-    { rank: 22, store: 'Karaikal', region: 'TN', type: 'COCO', rev: '8,410.00', orders: 36, aov: '233.61' },
-    { rank: 23, store: 'Nagavara', region: 'KA', type: 'COCO', rev: '7,890.00', orders: 34, aov: '232.06' },
-    { rank: 24, store: 'Baner Road - Pune', region: 'MH', type: 'COCO', rev: '7,120.00', orders: 31, aov: '229.68' },
-    { rank: 25, store: 'Puducherry', region: 'TN', type: 'COCO', rev: '6,450.00', orders: 28, aov: '230.36' },
-    { rank: 26, store: 'Sambalpur', region: 'ROI', type: 'FOFO', rev: '5,800.00', orders: 26, aov: '223.08' },
-    { rank: 27, store: 'Aurangabad - 1', region: 'MH', type: 'COCO', rev: '5,210.00', orders: 24, aov: '217.08' },
-    { rank: 28, store: 'Thiruvalla', region: 'Kerela', type: 'COCO', rev: '4,890.00', orders: 21, aov: '232.86' },
-    { rank: 29, store: 'Kakkanad', region: 'Kerela', type: 'COCO', rev: '4,120.00', orders: 18, aov: '228.89' },
+  let allStoresList = [
+    { rank: 1, store: 'Indiranagar - CK', region: 'KA', brand: 'Frozen Bottle', type: 'COCO', rev: '68,450.00', orders: 275, aov: '248.91' },
+    { rank: 2, store: 'Koramangala 5th Block', region: 'KA', brand: 'Frozen Bottle', type: 'COCO', rev: '61,220.00', orders: 242, aov: '252.98' },
+    { rank: 3, store: 'BTM Layout', region: 'KA', brand: 'Frozen Bottle', type: 'COCO', rev: '58,100.00', orders: 238, aov: '244.12' },
+    { rank: 4, store: 'Whitefield', region: 'KA', brand: 'Frozen Bottle', type: 'COCO', rev: '54,920.00', orders: 215, aov: '255.44' },
+    { rank: 5, store: 'HSR Layout', region: 'KA', brand: 'Frozen Bottle', type: 'COCO', rev: '51,340.00', orders: 204, aov: '251.67' },
+    { rank: 6, store: 'Bandra West', region: 'MH', brand: 'Frozen Bottle', type: 'COCO', rev: '49,800.00', orders: 188, aov: '264.89' },
+    { rank: 7, store: 'Khar', region: 'MH', brand: 'Frozen Bottle', type: 'COCO', rev: '46,250.00', orders: 176, aov: '262.78' },
+    { rank: 8, store: 'Anna Nagar', region: 'TN', brand: 'Frozen Bottle', type: 'COCO', rev: '44,120.00', orders: 182, aov: '242.42' },
+    { rank: 9, store: 'Alwarpet', region: 'TN', brand: 'Frozen Bottle', type: 'COCO', rev: '42,890.00', orders: 169, aov: '253.79' },
+    { rank: 10, store: 'Viman Nagar', region: 'MH', brand: 'Frozen Bottle', type: 'COCO', rev: '39,450.00', orders: 155, aov: '254.52' },
+    { rank: 11, store: 'AECS Layout', region: 'KA', brand: 'Frozen Bottle', type: 'COCO', rev: '36,120.00', orders: 144, aov: '250.83' },
+    { rank: 12, store: 'Jayanagar 4th Block', region: 'KA', brand: 'Frozen Bottle', type: 'COCO', rev: '34,800.00', orders: 139, aov: '250.36' },
+    { rank: 13, store: 'Mulund', region: 'MH', brand: 'Frozen Bottle', type: 'COCO', rev: '32,450.00', orders: 131, aov: '247.71' },
+    { rank: 14, store: 'Frazer Town', region: 'KA', brand: 'Frozen Bottle', type: 'COCO', rev: '29,810.00', orders: 122, aov: '244.34' },
+    { rank: 15, store: 'Malleswaram', region: 'KA', brand: 'Madno', type: 'COCO', rev: '28,120.00', orders: 115, aov: '244.52' },
+    { rank: 16, store: 'Marol - CF CK', region: 'MH', brand: 'Frozen Bottle', type: 'COCO', rev: '25,400.00', orders: 104, aov: '244.23' },
+    { rank: 17, store: 'Channasandra', region: 'KA', brand: 'Madno', type: 'COCO', rev: '22,100.00', orders: 92, aov: '240.22' },
+    { rank: 18, store: 'Bel Road', region: 'KA', brand: 'Madno', type: 'COCO', rev: '19,840.00', orders: 81, aov: '244.94' },
+    { rank: 19, store: 'Electronic City', region: 'KA', brand: 'Frozen Bottle', type: 'COCO', rev: '17,210.00', orders: 72, aov: '239.03' },
+    { rank: 20, store: 'Manipal', region: 'KA', brand: 'Frozen Bottle', type: 'COCO', rev: '9,840.00', orders: 42, aov: '234.29' },
+    { rank: 21, store: 'Avadi', region: 'TN', brand: 'Frozen Bottle', type: 'COCO', rev: '9,120.00', orders: 39, aov: '233.85' },
+    { rank: 22, store: 'Karaikal', region: 'TN', brand: 'Frozen Bottle', type: 'COCO', rev: '8,410.00', orders: 36, aov: '233.61' },
+    { rank: 23, store: 'Nagavara', region: 'KA', brand: 'Frozen Bottle', type: 'COCO', rev: '7,890.00', orders: 34, aov: '232.06' },
+    { rank: 24, store: 'Baner Road - Pune', region: 'MH', brand: 'Frozen Bottle', type: 'COCO', rev: '7,120.00', orders: 31, aov: '229.68' },
+    { rank: 25, store: 'Puducherry', region: 'TN', brand: 'Frozen Bottle', type: 'COCO', rev: '6,450.00', orders: 28, aov: '230.36' },
+    { rank: 26, store: 'Sambalpur', region: 'ROI', brand: 'Boba Bar', type: 'FOFO', rev: '5,800.00', orders: 26, aov: '223.08' },
+    { rank: 27, store: 'Aurangabad - 1', region: 'MH', brand: 'Frozen Bottle', type: 'COCO', rev: '5,210.00', orders: 24, aov: '217.08' },
+    { rank: 28, store: 'Thiruvalla', region: 'Kerela', brand: 'Frozen Bottle', type: 'COCO', rev: '4,890.00', orders: 21, aov: '232.86' },
+    { rank: 29, store: 'Kakkanad', region: 'Kerela', brand: 'Madno', type: 'COCO', rev: '4,120.00', orders: 18, aov: '228.89' },
   ];
+
+  if (region !== 'ALL') allStoresList = allStoresList.filter((s) => s.region === region);
+  if (brand !== 'ALL') allStoresList = allStoresList.filter((s) => s.brand === brand);
 
   return NextResponse.json({
     success: true,
