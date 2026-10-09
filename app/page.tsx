@@ -14,7 +14,6 @@ export default function Home() {
   const [googleRating, setGoogleRating] = useState('4.24');
   const [loading, setLoading] = useState(true);
 
-  // Fetch Google Rating once for top KPI
   useEffect(() => {
     fetch('/api/ratings?platform=google')
       .then((res) => res.json())
@@ -26,7 +25,6 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
-  // Fetch dashboard data
   useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams({
@@ -44,7 +42,6 @@ export default function Home() {
       .catch(() => setLoading(false));
   }, [platform, selectedBrand, selectedRegion, selectedStore]);
 
-  // Dynamic Store List based on Region Selection
   const availableStores = React.useMemo(() => {
     if (!data?.slicers?.regionStores) return [];
     if (selectedRegion === 'ALL') {
@@ -166,7 +163,7 @@ export default function Home() {
         <div>
           <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 800, color: '#ffffff' }}>Frozen Bottle Operations Hub</h1>
           <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>
-            Store Performance • Previous ({pLabel}) vs Current ({cLabel})
+            Store Performance • Previous ({pLabel}) vs Current ({cLabel}) • Capped Oct 9, 2026
           </p>
         </div>
 
@@ -193,7 +190,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Top Operations KPI Row */}
+      {/* Operations KPI Row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', margin: '20px 0' }}>
         <div style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '16px' }}>
           <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Net Sales</span>
@@ -236,7 +233,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Slicers Row: Brand, Region, Cascading Store */}
+      {/* Slicers Row */}
       <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap', backgroundColor: '#0f172a', padding: '12px 16px', borderRadius: '12px', border: '1px solid #1f293d' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Brand:</span>
@@ -282,7 +279,7 @@ export default function Home() {
             <h2 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               {platform} Rating Trend
             </h2>
-            <span style={{ fontSize: '11px', color: '#94a3b8' }}>Dynamic trend based on selected slicers</span>
+            <span style={{ fontSize: '11px', color: '#94a3b8' }}>Trend up to Oct 9, 2026</span>
           </div>
 
           <div style={{ display: 'flex', backgroundColor: '#1e293b', padding: '2px', borderRadius: '8px' }}>
@@ -311,7 +308,7 @@ export default function Home() {
         {renderSvgLineChart()}
       </div>
 
-      {/* Main Performance Comparison Table */}
+      {/* Main Performance Table */}
       {loading ? (
         <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Syncing store performance for {cLabel}...</div>
       ) : (
@@ -386,10 +383,10 @@ export default function Home() {
         </div>
       )}
 
-      {/* NEW: Issue Breakup Analysis & Category Performance */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '20px', marginTop: '28px' }}>
+      {/* Issue Breakup & Category Monthly Comparison Table */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '20px', marginTop: '28px' }}>
         
-        {/* Issue Breakup Cards */}
+        {/* Issue Type Breakup */}
         <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '12px', padding: '20px' }}>
           <h3 style={{ margin: '0 0 14px', fontSize: '13px', color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             {platform} Issue Type Breakup ({pLabel} vs {cLabel})
@@ -413,33 +410,46 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Category-Wise Performance */}
+        {/* Category Performance with Monthly Comparison */}
         <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '12px', padding: '20px' }}>
           <h3 style={{ margin: '0 0 14px', fontSize: '13px', color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Top Category Issue Performance ({cLabel})
+            Category Issue & Rating Comparison ({pLabel} vs {cLabel})
           </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {data?.categoryPerformance?.map((cat: any) => (
-              <div key={cat.category} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#131c2e', padding: '10px 14px', borderRadius: '8px', border: '1px solid #1f293d' }}>
-                <div>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#ffffff', display: 'block' }}>{cat.category}</span>
-                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>Avg Rating: <strong style={{ color: '#f59e0b' }}>{cat.currRating} ★</strong></span>
-                </div>
-                <div style={{ textAlign: 'right', fontSize: '11px' }}>
-                  <span style={{ color: '#f87171', fontWeight: 700, display: 'block' }}>{cat.currIssues} Issues</span>
-                  <span style={{ color: '#64748b' }}>Rate: {cat.issueRate}</span>
-                </div>
-              </div>
-            ))}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+              <thead>
+                <tr style={{ color: '#94a3b8', borderBottom: '1px solid #1f293d', textAlign: 'left' }}>
+                  <th style={{ padding: '6px' }}>Category</th>
+                  <th style={{ padding: '6px', textAlign: 'center' }}>{pLabel} Issues</th>
+                  <th style={{ padding: '6px', textAlign: 'center' }}>{cLabel} Issues</th>
+                  <th style={{ padding: '6px', textAlign: 'center' }}>% Chg</th>
+                  <th style={{ padding: '6px', textAlign: 'center' }}>{cLabel} Rating</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data?.categoryPerformance?.map((cat: any) => {
+                  const isNeg = parseFloat(cat.issueDiff) <= 0;
+                  return (
+                    <tr key={cat.category} style={{ borderBottom: '1px solid #131c2e' }}>
+                      <td style={{ padding: '8px 6px', fontWeight: 600, color: '#ffffff' }}>{cat.category}</td>
+                      <td style={{ padding: '8px 6px', textAlign: 'center', color: '#cbd5e1' }}>{cat.prevIssues}</td>
+                      <td style={{ padding: '8px 6px', textAlign: 'center', color: '#ffffff', fontWeight: 700 }}>{cat.currIssues}</td>
+                      <td style={{ padding: '8px 6px', textAlign: 'center', color: isNeg ? '#34d399' : '#f87171', fontWeight: 700 }}>{cat.issueDiff}</td>
+                      <td style={{ padding: '8px 6px', textAlign: 'center', color: '#f59e0b', fontWeight: 700 }}>{cat.currRating} ★</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
 
       </div>
 
-      {/* NEW: Latest Customer Comments with Verified Ratings */}
+      {/* Customer Comments with Swiggy Col Q & Zomato Col N */}
       <div style={{ marginTop: '28px', backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '12px', padding: '20px' }}>
         <h3 style={{ margin: '0 0 16px', fontSize: '13px', color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Recent Customer Feedback with Exact Ratings ({platform} • {cLabel})
+          Customer Comments & Ratings ({platform} • {cLabel} 2026)
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '12px' }}>
           {data?.recentComments?.length > 0 ? (
@@ -483,7 +493,7 @@ export default function Home() {
               </div>
             ))
           ) : (
-            <div style={{ padding: '16px', color: '#64748b', fontSize: '13px' }}>No written customer feedback recorded for this period.</div>
+            <div style={{ padding: '16px', color: '#64748b', fontSize: '13px' }}>No customer comments recorded for this period.</div>
           )}
         </div>
       </div>
