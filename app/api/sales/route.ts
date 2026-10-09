@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
 export const revalidate = 60;
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const viewType = (searchParams.get('view') || 'daily').toLowerCase(); // 'daily' | 'weekly' | 'monthly'
+  const viewType = (searchParams.get('view') || 'daily').toLowerCase();
   const brand = searchParams.get('brand') || 'ALL';
   const region = searchParams.get('region') || 'ALL';
   const source = searchParams.get('source') || 'ALL';
   const session = searchParams.get('session') || 'ALL';
 
-
-  // Dynamic scaling factors based on selected dropdown slicers
   let multiplier = 1.0;
   if (brand !== 'ALL') multiplier *= 0.38;
   if (region !== 'ALL') multiplier *= 0.32;
@@ -24,36 +24,34 @@ export async function GET(req: Request) {
   const baseDis = -973213.69 * multiplier;
   const aov = baseTxn > 0 ? (baseNet / baseTxn).toFixed(2) : '247.13';
 
-  // 1. Overall KPI by View Mode
   const dailyKPI = [
-    { param: 'Gross Sales', yesterday: '2,558,794.59', mtd: '18,452,190.00', lmtd: '17,210,480.00', trends: '+7.2%', lm: '68,410,250.00', ly: '52,140,800.00' },
-    { param: 'Discount', yesterday: '-973,213.69', mtd: '-6,854,120.00', lmtd: '-6,210,450.00', trends: '+10.3%', lm: '-25,480,100.00', ly: '-18,200,400.00' },
-    { param: 'Net Sales', yesterday: '1,654,290.98', mtd: '12,410,890.00', lmtd: '11,480,210.00', trends: '+8.1%', lm: '45,820,150.00', ly: '35,840,400.00' },
-    { param: 'Orders (Txn)', yesterday: '6,694.00', mtd: '48,650.00', lmtd: '44,210.00', trends: '+10.0%', lm: '178,450.00', ly: '135,210.00' },
-    { param: 'AOV', yesterday: '247.13', mtd: '255.10', lmtd: '259.67', trends: '-1.7%', lm: '256.76', ly: '265.07' },
+    { param: 'Gross Sales', yesterday: fmt(baseGross), mtd: fmt(baseGross * 7.2), lmtd: fmt(baseGross * 6.7), trends: '+7.2%', lm: fmt(baseGross * 26.7), ly: fmt(baseGross * 20.3) },
+    { param: 'Discount', yesterday: fmt(baseDis), mtd: fmt(baseDis * 7.0), lmtd: fmt(baseDis * 6.4), trends: '+10.3%', lm: fmt(baseDis * 26.1), ly: fmt(baseDis * 18.7) },
+    { param: 'Net Sales', yesterday: fmt(baseNet), mtd: fmt(baseNet * 7.5), lmtd: fmt(baseNet * 6.9), trends: '+8.1%', lm: fmt(baseNet * 27.6), ly: fmt(baseNet * 21.6) },
+    { param: 'Orders (Txn)', yesterday: fmt(baseTxn), mtd: fmt(baseTxn * 7.2), lmtd: fmt(baseTxn * 6.6), trends: '+10.0%', lm: fmt(baseTxn * 26.6), ly: fmt(baseTxn * 20.2) },
+    { param: 'AOV', yesterday: aov, mtd: (parseFloat(aov) * 1.03).toFixed(2), lmtd: (parseFloat(aov) * 1.05).toFixed(2), trends: '-1.7%', lm: aov, ly: (parseFloat(aov) * 1.07).toFixed(2) },
     { param: 'Discount %', yesterday: '-38.03%', mtd: '-37.14%', lmtd: '-36.08%', trends: '+2.9%', lm: '-37.24%', ly: '-34.90%' },
   ];
 
   const weeklyKPI = [
-    { param: 'Gross Sales', cwk: '14,250,890.00', lw: '13,850,210.00', l2w: '12,940,500.00', gwLw: '+2.89%', gwL2w: '+10.12%' },
-    { param: 'Discount', cwk: '-5,280,450.00', lw: '-5,010,200.00', l2w: '-4,680,120.00', gwLw: '+5.39%', gwL2w: '+12.82%' },
-    { param: 'Net Sales', cwk: '9,480,240.00', lw: '9,240,150.00', l2w: '8,620,400.00', gwLw: '+2.59%', gwL2w: '+9.97%' },
-    { param: 'Orders (Txn)', cwk: '37,450.00', lw: '35,920.00', l2w: '34,180.00', gwLw: '+4.25%', gwL2w: '+9.56%' },
+    { param: 'Gross Sales', cwk: fmt(baseGross * 5.6), lw: fmt(baseGross * 5.4), l2w: fmt(baseGross * 5.0), gwLw: '+2.89%', gwL2w: '+10.12%' },
+    { param: 'Discount', cwk: fmt(baseDis * 5.4), lw: fmt(baseDis * 5.1), l2w: fmt(baseDis * 4.8), gwLw: '+5.39%', gwL2w: '+12.82%' },
+    { param: 'Net Sales', cwk: fmt(baseNet * 5.7), lw: fmt(baseNet * 5.6), l2w: fmt(baseNet * 5.2), gwLw: '+2.59%', gwL2w: '+9.97%' },
+    { param: 'Orders (Txn)', cwk: fmt(baseTxn * 5.6), lw: fmt(baseTxn * 5.4), l2w: fmt(baseTxn * 5.1), gwLw: '+4.25%', gwL2w: '+9.56%' },
     { param: 'AOV', cwk: '253.14', lw: '257.24', l2w: '252.20', gwLw: '-1.59%', gwL2w: '+0.37%' },
     { param: 'Discount %', cwk: '-37.05%', lw: '-36.17%', l2w: '-36.16%', gwLw: '+2.43%', gwL2w: '+2.46%' },
   ];
 
   const monthlyKPI = [
-    { param: 'Gross Sales', octMtd: '18,452,190.00', sep: '68,410,250.00', aug: '64,250,180.00', jul: '58,940,210.00', momGw: '+6.47%' },
-    { param: 'Discount', octMtd: '-6,854,120.00', sep: '-25,480,100.00', aug: '-23,840,150.00', jul: '-21,210,400.00', momGw: '+6.87%' },
-    { param: 'Net Sales', octMtd: '12,410,890.00', sep: '45,820,150.00', aug: '43,150,220.00', jul: '39,840,120.00', momGw: '+6.18%' },
-    { param: 'Orders (Txn)', octMtd: '48,650.00', sep: '178,450.00', aug: '169,210.00', jul: '154,200.00', momGw: '+5.46%' },
+    { param: 'Gross Sales', octMtd: fmt(baseGross * 7.2), sep: fmt(baseGross * 26.7), aug: fmt(baseGross * 25.1), jul: fmt(baseGross * 23.0), momGw: '+6.47%' },
+    { param: 'Discount', octMtd: fmt(baseDis * 7.0), sep: fmt(baseDis * 26.1), aug: fmt(baseDis * 24.5), jul: fmt(baseDis * 21.8), momGw: '+6.87%' },
+    { param: 'Net Sales', octMtd: fmt(baseNet * 7.5), sep: fmt(baseNet * 27.6), aug: fmt(baseNet * 26.1), jul: fmt(baseNet * 24.1), momGw: '+6.18%' },
+    { param: 'Orders (Txn)', octMtd: fmt(baseTxn * 7.2), sep: fmt(baseTxn * 26.6), aug: fmt(baseTxn * 25.2), jul: fmt(baseTxn * 23.0), momGw: '+5.46%' },
     { param: 'AOV', octMtd: '255.10', sep: '256.76', aug: '255.00', jul: '258.36', momGw: '+0.69%' },
     { param: 'Discount %', octMtd: '-37.14%', sep: '-37.24%', aug: '-37.10%', jul: '-35.98%', momGw: '-0.26%' },
   ];
 
-  // 2. AOV Bucket Analysis (Matching attached image exactly)
- const aovBuckets = [
+  const aovBuckets = [
     { bucket: '0-100', col1: `0.1% | ${Math.max(1, Math.round(3 * multiplier))}`, col2: `0.1% | ${Math.max(1, Math.round(4 * multiplier))}`, col3: `0.1% | ${Math.max(1, Math.round(59 * multiplier))}`, col4: `0.1% | ${Math.max(1, Math.round(26 * multiplier))}` },
     { bucket: '100-200', col1: `2.8% | ${Math.round(457 * multiplier)}`, col2: `3.1% | ${Math.round(565 * multiplier)}`, col3: `2.5% | ${Math.round(3455 * multiplier)}`, col4: `4.1% | ${Math.round(4946 * multiplier)}` },
     { bucket: '200-300', col1: `18.1% | ${Math.round(2386 * multiplier)}`, col2: `19% | ${Math.round(2422 * multiplier)}`, col3: `21.9% | ${Math.round(21811 * multiplier)}`, col4: `21.3% | ${Math.round(17537 * multiplier)}` },
@@ -63,22 +61,20 @@ export async function GET(req: Request) {
     { bucket: '>600', col1: '0% | 0', col2: '0% | 0', col3: `6.8% | ${Math.round(2645 * multiplier)}`, col4: `7.5% | ${Math.round(2599 * multiplier)}` },
   ];
 
-  // 3. Discount Bucket Analysis (Matching attached image exactly)
   const discountBuckets = [
-    { bucket: '0%', col1: '16.3% | 1463', col2: '24.9% | 2590', col3: '27.2% | 21690', col4: '32.5% | 21420' },
-    { bucket: '1%-10%', col1: '3.7% | 281', col2: '10% | 1144', col3: '8.5% | 6579', col4: '7.8% | 4988' },
-    { bucket: '10%-20%', col1: '10.4% | 824', col2: '9.3% | 797', col3: '9.9% | 6023', col4: '9.8% | 5832' },
-    { bucket: '20%-30%', col1: '11% | 1183', col2: '9.9% | 930', col3: '11.3% | 8431', col4: '16.4% | 10223' },
-    { bucket: '30%-40%', col1: '26.4% | 2768', col2: '24.8% | 2584', col3: '26.7% | 21791', col4: '25% | 16998' },
-    { bucket: '40%-50%', col1: '28.7% | 3206', col2: '20.5% | 2186', col3: '15.6% | 14262', col4: '8.2% | 5988' },
-    { bucket: '50%-60%', col1: '3.8% | 574', col2: '0.9% | 137', col3: '1.2% | 1504', col4: '0.6% | 632' },
-    { bucket: '60%-70%', col1: '0.1% | 5', col2: '0.1% | 5', col3: '0.1% | 66', col4: '0.1% | 52' },
-    { bucket: '70%-80%', col1: '0.1% | 1', col2: '0% | 0', col3: '0.1% | 2', col4: '0.1% | 7' },
+    { bucket: '0%', col1: `16.3% | ${Math.round(1463 * multiplier)}`, col2: `24.9% | ${Math.round(2590 * multiplier)}`, col3: `27.2% | ${Math.round(21690 * multiplier)}`, col4: `32.5% | ${Math.round(21420 * multiplier)}` },
+    { bucket: '1%-10%', col1: `3.7% | ${Math.round(281 * multiplier)}`, col2: `10% | ${Math.round(1144 * multiplier)}`, col3: `8.5% | ${Math.round(6579 * multiplier)}`, col4: `7.8% | ${Math.round(4988 * multiplier)}` },
+    { bucket: '10%-20%', col1: `10.4% | ${Math.round(824 * multiplier)}`, col2: `9.3% | ${Math.round(797 * multiplier)}`, col3: `9.9% | ${Math.round(6023 * multiplier)}`, col4: `9.8% | ${Math.round(5832 * multiplier)}` },
+    { bucket: '20%-30%', col1: `11% | ${Math.round(1183 * multiplier)}`, col2: `9.9% | ${Math.round(930 * multiplier)}`, col3: `11.3% | ${Math.round(8431 * multiplier)}`, col4: `16.4% | ${Math.round(10223 * multiplier)}` },
+    { bucket: '30%-40%', col1: `26.4% | ${Math.round(2768 * multiplier)}`, col2: `24.8% | ${Math.round(2584 * multiplier)}`, col3: `26.7% | ${Math.round(21791 * multiplier)}`, col4: `25% | ${Math.round(16998 * multiplier)}` },
+    { bucket: '40%-50%', col1: `28.7% | ${Math.round(3206 * multiplier)}`, col2: `20.5% | ${Math.round(2186 * multiplier)}`, col3: `15.6% | ${Math.round(14262 * multiplier)}`, col4: `8.2% | ${Math.round(5988 * multiplier)}` },
+    { bucket: '50%-60%', col1: `3.8% | ${Math.round(574 * multiplier)}`, col2: `0.9% | ${Math.round(137 * multiplier)}`, col3: `1.2% | ${Math.round(1504 * multiplier)}`, col4: `0.6% | ${Math.round(632 * multiplier)}` },
+    { bucket: '60%-70%', col1: `0.1% | ${Math.max(1, Math.round(5 * multiplier))}`, col2: `0.1% | ${Math.max(1, Math.round(5 * multiplier))}`, col3: `0.1% | ${Math.round(66 * multiplier)}`, col4: `0.1% | ${Math.round(52 * multiplier)}` },
+    { bucket: '70%-80%', col1: `0.1% | ${Math.max(1, Math.round(1 * multiplier))}`, col2: '0% | 0', col3: `0.1% | ${Math.max(1, Math.round(2 * multiplier))}`, col4: `0.1% | ${Math.round(7 * multiplier)}` },
     { bucket: '80%-90%', col1: '0% | 0', col2: '0% | 0', col3: '0% | 0', col4: '0% | 0' },
-    { bucket: '90%-100%', col1: '0% | 0', col2: '0% | 0', col3: '0% | 0', col4: '0.1% | 5' },
+    { bucket: '90%-100%', col1: '0% | 0', col2: '0% | 0', col3: '0% | 0', col4: `0.1% | ${Math.round(5 * multiplier)}` },
   ];
 
-  // 4. Summaries
   const brandSummary = [
     { brand: 'Frozen Bottle', todayRev: '1,361,945.20', lwRev: '1,527,938.74', growth: '-10.86%', todayDis: '-38.86%', lwDis: '-33.95%', disChange: '-4.91%' },
     { brand: 'Madno', todayRev: '217,070.66', lwRev: '248,423.59', growth: '-12.62%', todayDis: '-36.72%', lwDis: '-35.07%', disChange: '-1.65%' },
@@ -109,7 +105,6 @@ export async function GET(req: Request) {
     { region: 'Kerela', breakfast: '2,631.00', lunch: '15,022.54', snacks: '14,029.53', dinner: '25,305.78', postDinner: '4,979.21', bfGw: '-54.24%', luGw: '-38.76%', snGw: '-13.99%', diGw: '-9.48%', pdGw: '-39.98%' },
   ];
 
-  // 5. All Stores List (Full Store Ranking)
   const allStoresList = [
     { rank: 1, store: 'Indiranagar - CK', region: 'KA', type: 'COCO', rev: '68,450.00', orders: 275, aov: '248.91' },
     { rank: 2, store: 'Koramangala 5th Block', region: 'KA', type: 'COCO', rev: '61,220.00', orders: 242, aov: '252.98' },
@@ -145,13 +140,11 @@ export async function GET(req: Request) {
   return NextResponse.json({
     success: true,
     viewType,
-    // Live hourly timestamp generated dynamically
-    liveTimestamp: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) + ' (Live Hourly Sync)',
-    dataTill: '09 Oct 2026 ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '00', hour12: true }),
-    executiveInsight: '-9.6% vs LW, +22.3% vs L2W, +8.1% vs MoM, +41.7% vs LY -> Live Sales Pacing Active',
+    dataTill: '09 Oct 2026 12:30 PM (Live Pacing)',
+    executiveInsight: '-9.6% vs LW, +22.3% vs L2W, +8.1% vs MoM, +41.7% vs LY -> Active Pacing',
     kpis: {
-      netRev: baseNet.toLocaleString('en-IN', { maximumFractionDigits: 2 }),
-      orders: baseTxn.toLocaleString('en-IN'),
+      netRev: fmt(baseNet),
+      orders: fmt(baseTxn),
       disPct: '-38.03%',
       aov: aov,
       offlinePct: '25.0%',
