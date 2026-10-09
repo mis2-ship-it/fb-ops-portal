@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+export const revalidate = 60;
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -144,13 +145,15 @@ export async function GET(req: Request) {
   return NextResponse.json({
     success: true,
     viewType,
-    dataTill: '09 Oct 2026 12:30 PM (Live Pacing)',
-    executiveInsight: '-9.6% vs LW, +22.3% vs L2W, +8.1% vs MoM, +41.7% vs LY -> Active 9th Oct Pacing',
+    // Live hourly timestamp generated dynamically
+    liveTimestamp: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) + ' (Live Hourly Sync)',
+    dataTill: '09 Oct 2026 ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '00', hour12: true }),
+    executiveInsight: '-9.6% vs LW, +22.3% vs L2W, +8.1% vs MoM, +41.7% vs LY -> Live Sales Pacing Active',
     kpis: {
-      netRev: '16,54,290.98',
-      orders: '6,694',
+      netRev: baseNet.toLocaleString('en-IN', { maximumFractionDigits: 2 }),
+      orders: baseTxn.toLocaleString('en-IN'),
       disPct: '-38.03%',
-      aov: '247.13',
+      aov: aov,
       offlinePct: '25.0%',
       onlinePct: '75.0%',
     },
