@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 
 type MainView = 'Operations' | 'Sales' | 'KptO2d';
-type SalesSubView = 'daily' | 'weekly' | 'monthly';
+type SalesSubView = 'live' | 'daily' | 'weekly' | 'monthly';
 type Platform = 'Google' | 'Swiggy' | 'Zomato';
 type ChartGranularity = 'day' | 'week' | 'month';
 
@@ -326,7 +326,7 @@ export default function Home() {
             </div>
 
             <div style={{ display: 'flex', backgroundColor: '#0f172a', padding: '3px', borderRadius: '8px', border: '1px solid #1f293d' }}>
-              {(['daily', 'weekly', 'monthly'] as SalesSubView[]).map((v) => (
+              {(['live', 'daily', 'weekly', 'monthly'] as SalesSubView[]).map((v) => (
                 <button
                   key={v}
                   onClick={() => setSalesSubView(v)}
@@ -335,14 +335,14 @@ export default function Home() {
                     color: '#ffffff',
                     border: 'none',
                     borderRadius: '6px',
-                    padding: '5px 14px',
+                    padding: '5px 12px',
                     fontSize: '11px',
                     fontWeight: 700,
                     cursor: 'pointer',
                     textTransform: 'capitalize',
                   }}
                 >
-                  {v === 'daily' ? '📅 Daily' : v === 'weekly' ? '📆 Weekly' : '🗓️ Monthly'}
+                  {v === 'live' ? '🔴 Live Sales' : v === 'daily' ? '📅 Daily' : v === 'weekly' ? '📆 Weekly' : '🗓️ Monthly'}
                 </button>
               ))}
             </div>
