@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 60;
+
 const GOOGLE_CSV = "https://docs.google.com/spreadsheets/d/1HlYNDNXig3PCjIFpQdI8B1lEzubsttUEPj_57DgpJoE/gviz/tq?tqx=out:csv&sheet=Complaints";
 const SWIGGY_CSV = "https://docs.google.com/spreadsheets/d/1R5kdiLGiNV2zSxs2hyObxUF216iqeaDVTggM7mub0Ck/gviz/tq?tqx=out:csv&sheet=Raw%20Data";
 const ZOMATO_CSV = "https://docs.google.com/spreadsheets/d/1V-tFd3I9CRxDUWSrU9Zc6ODW9Qhbs4C0SXZq4mW6tsg/gviz/tq?tqx=out:csv&sheet=Raw%20Data";
@@ -30,7 +33,6 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
-// Strict MM-DD-YYYY parser
 function parseMMDDYYYY(dateStr: string): Date | null {
   if (!dateStr) return null;
   const cleaned = dateStr.replace(/["']/g, '').trim();
@@ -48,7 +50,7 @@ function parseMMDDYYYY(dateStr: string): Date | null {
   }
 
   if (y < 100) y += 2000;
-  if (y !== 2026) return null; // Reject historical 2025 rows
+  if (y !== 2026) return null;
 
   const res = new Date(y, m, d);
   return isNaN(res.getTime()) ? null : res;
@@ -84,7 +86,9 @@ export async function GET(req: Request) {
     const res = await fetch(targetUrl, { next: { revalidate: 60 } });
     const text = await res.text();
     const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
-    if (lines.length < 2) return NextResponse.json({ success: false, error: 'Empty dataset' });
+    if (lines.length < 2) {
+      return NextResponse.json({ success: false, error: 'Empty dataset' });
+    }
 
     let colDate = 2;          // Zomato Col C
     let colStore = 3;         // Zomato Col D
@@ -99,17 +103,17 @@ export async function GET(req: Request) {
     let colCustomerComment = 13; // Zomato Col N
 
     if (platform === 'swiggy') {
-      colDate = 4;            // Swiggy Col E (Date: MM-DD-YYYY)
-      colStore = 5;           // Swiggy Col F
-      colBrand = 6;           // Swiggy Col G
-      colCategory = 8;        // Swiggy Col I
-      colGroupComment = 9;    // Swiggy Col J (Comments Group)
-      colOrderCount = 10;     // Swiggy Col K
-      colRating = 11;         // Swiggy Col L
-      colStoreType = 12;      // Swiggy Col M
-      colRegion = 13;         // Swiggy Col N
-      colRatedOrder = 14;     // Swiggy Col O
-      colCustomerComment = 16;// Swiggy Col Q (Customer comments)
+      colDate = 4;            // Col E
+      colStore = 5;           // Col F
+      colBrand = 6;           // Col G
+      colCategory = 8;        // Col I
+      colGroupComment = 9;    // Col J
+      colOrderCount = 10;     // Col K
+      colRating = 11;         // Col L
+      colStoreType = 12;      // Col M
+      colRegion = 13;         // Col N
+      colRatedOrder = 14;     // Col O
+      colCustomerComment = 16;// Col Q
     } else if (platform === 'google') {
       colRating = 7;          // Col H
       colCustomerComment = 8; // Col I
@@ -141,7 +145,7 @@ export async function GET(req: Request) {
 
     const rows: CleanRow[] = [];
     const regionStoresMap: Record<string, Set<string>> = {};
-    const todayLimit = new Date(2026, 9, 9, 23, 59, 59); // Max capped at October 9, 2026
+    const todayLimit = new Date(2026, 9, 9, 23, 59, 59);
 
     for (let i = 1; i < lines.length; i++) {
       const cols = parseCSVLine(lines[i]);
@@ -177,7 +181,6 @@ export async function GET(req: Request) {
       const isRated = colRatedOrder !== -1 && cols[colRatedOrder] ? cols[colRatedOrder].trim() === '1' : hasRating;
       const orderCount = colOrderCount !== -1 ? parseInt(cols[colOrderCount] || '1', 10) || 1 : 1;
 
-      // Classify Issue Type
       const rawGroup = (cols[colGroupComment] || '').toLowerCase();
       let issueType = '';
       if (rawGroup.includes('quantity') || rawGroup.includes('qty')) issueType = 'Quantity Issue';
@@ -192,7 +195,6 @@ export async function GET(req: Request) {
       const isIssue = (hasRating && rVal <= 3) || issueType.length > 0;
       const categoryName = colCategory !== -1 && cols[colCategory] ? cols[colCategory].trim() : 'General';
 
-      // Swiggy Col Q or Zomato Col N customer comments
       let custComment = (cols[colCustomerComment] || '').replace(/^"|"$/g, '').trim();
       if (!custComment || custComment === '0' || custComment.toLowerCase() === 'null') {
         custComment = (cols[colGroupComment] || '').replace(/^"|"$/g, '').trim();
@@ -225,7 +227,6 @@ export async function GET(req: Request) {
       regionStoresObj[r] = Array.from(stSet).sort();
     }
 
-    // Apply Slicers
     const filteredRows = rows.filter((r) => {
       if (brandFilter !== 'ALL' && r.brand !== brandFilter) return false;
       if (regionFilter !== 'ALL' && r.region !== regionFilter) return false;
@@ -233,7 +234,6 @@ export async function GET(req: Request) {
       return true;
     });
 
-    // Line Chart (strictly Oct 1 to Oct 9 for day granularity)
     const dayMap: Record<string, { sum: number; count: number; date: string }> = {};
     const weekMap: Record<string, { sum: number; count: number; label: string }> = {};
     const monthMap: Record<string, { sum: number; count: number; label: string }> = {};
@@ -241,7 +241,6 @@ export async function GET(req: Request) {
     for (const r of filteredRows) {
       if (r.rating <= 0) continue;
 
-      // Day Level: Oct 1 - Oct 9, 2026
       if (r.date.getFullYear() === 2026 && r.date.getMonth() === 9 && r.date.getDate() <= 9) {
         const dKey = `10-${String(r.date.getDate()).padStart(2, '0')}`;
         if (!dayMap[dKey]) dayMap[dKey] = { sum: 0, count: 0, date: dKey };
@@ -249,7 +248,6 @@ export async function GET(req: Request) {
         dayMap[dKey].count++;
       }
 
-      // Week Level
       const diffDays = Math.floor((todayLimit.getTime() - r.date.getTime()) / (24 * 60 * 60 * 1000));
       const weekDiff = Math.floor(diffDays / 7);
       if (diffDays >= 0 && weekDiff < 6) {
@@ -259,7 +257,6 @@ export async function GET(req: Request) {
         weekMap[wKey].count++;
       }
 
-      // Month Level
       if (r.date.getFullYear() === 2026 && r.date.getMonth() >= 4 && r.date.getMonth() <= 9) {
         const mKey = r.date.toLocaleString('default', { month: 'short' }) + '-26';
         if (!monthMap[mKey]) monthMap[mKey] = { sum: 0, count: 0, label: mKey };
@@ -288,16 +285,17 @@ export async function GET(req: Request) {
       month: monthPoints,
     };
 
-    // Issue Breakdown Analysis
-    const issueCounts = {
-      'Quantity Issue': { prev: 0, curr: 0 },
-      'Quality Issue': { prev: 0, curr: 0 },
-      'Missing Item Issue': { prev: 0, curr: 0 },
-      'Wrong Item Issue': { prev: 0, curr: 0 },
-      'Packing Issue': { prev: 0, curr: 0 },
-    };
+    const brandIssuesMap: Record<string, Record<string, { prev: number; curr: number }>> = {};
+    VALID_BRANDS.forEach((b) => {
+      brandIssuesMap[b] = {
+        'Quantity Issue': { prev: 0, curr: 0 },
+        'Quality Issue': { prev: 0, curr: 0 },
+        'Missing Item Issue': { prev: 0, curr: 0 },
+        'Wrong Item Issue': { prev: 0, curr: 0 },
+        'Packing Issue': { prev: 0, curr: 0 },
+      };
+    });
 
-    // Category Level Metrics (Monthly Comparison: Sep-26 vs Oct-26)
     const categoryStats: Record<string, {
       prevIssues: number;
       currIssues: number;
@@ -312,14 +310,14 @@ export async function GET(req: Request) {
     const customerComments: Array<{ store: string; date: string; rating: number; issue: string; comment: string; time: number }> = [];
 
     for (const r of filteredRows) {
-      const isC = r.date.getFullYear() === 2026 && r.date.getMonth() === 9; // Oct-26
-      const isP = r.date.getFullYear() === 2026 && r.date.getMonth() === 8; // Sep-26
+      const isC = r.date.getFullYear() === 2026 && r.date.getMonth() === 9;
+      const isP = r.date.getFullYear() === 2026 && r.date.getMonth() === 8;
 
-      if (r.issueType) {
-        const key = Object.keys(issueCounts).find((k) => r.issueType.toLowerCase().includes(k.toLowerCase().split(' ')[0]));
+      if (r.issueType && brandIssuesMap[r.brand]) {
+        const key = Object.keys(brandIssuesMap[r.brand]).find((k) => r.issueType.toLowerCase().includes(k.toLowerCase().split(' ')[0]));
         if (key) {
-          if (isC) issueCounts[key as keyof typeof issueCounts].curr += r.orderCount;
-          if (isP) issueCounts[key as keyof typeof issueCounts].prev += r.orderCount;
+          if (isC) brandIssuesMap[r.brand][key].curr += r.orderCount;
+          if (isP) brandIssuesMap[r.brand][key].prev += r.orderCount;
         }
       }
 
@@ -353,7 +351,6 @@ export async function GET(req: Request) {
         }
       }
 
-      // Collect Swiggy / Zomato comments for Oct-26
       if (isC && r.comment && r.comment.length > 2 && r.comment !== '0' && r.comment.toLowerCase() !== 'null') {
         customerComments.push({
           store: r.store,
@@ -384,8 +381,7 @@ export async function GET(req: Request) {
           currOrders: stat.currOrders,
         };
       })
-      .sort((a, b) => b.currIssues - a.currIssues)
-      .slice(0, 10);
+      .sort((a, b) => parseFloat(b.currRating) - parseFloat(a.currRating));
 
     const buildMetric = (name: string, targetRows: CleanRow[]): MetricSummary => {
       let pSum = 0, pCount = 0, cSum = 0, cCount = 0;
@@ -462,14 +458,9 @@ export async function GET(req: Request) {
       currentLabel,
       slicers: { brands: allBrands, regions: allRegions, regionStores: regionStoresObj },
       chartData,
-      issueBreakup: Object.entries(issueCounts).map(([issue, cnt]) => ({
-        issue,
-        prev: cnt.prev,
-        curr: cnt.curr,
-        diffPct: cnt.prev > 0 ? (((cnt.curr - cnt.prev) / cnt.prev) * 100).toFixed(1) + '%' : '0%',
-      })),
+      brandIssues: brandIssuesMap,
       categoryPerformance: categoryList,
-      recentComments: customerComments.slice(0, 25),
+      recentComments: customerComments.slice(0, 50),
       performance: { overall, brands, regions },
     });
   } catch (err: any) {
