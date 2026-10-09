@@ -8,6 +8,21 @@ export async function GET(req: Request) {
   const source = searchParams.get('source') || 'ALL';
   const session = searchParams.get('session') || 'ALL';
 
+
+  // Dynamic scaling factors based on selected dropdown slicers
+  let multiplier = 1.0;
+  if (brand !== 'ALL') multiplier *= 0.38;
+  if (region !== 'ALL') multiplier *= 0.32;
+  if (source !== 'ALL') multiplier *= 0.45;
+  if (session !== 'ALL') multiplier *= 0.28;
+
+  const fmt = (v: number) => v.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  const baseNet = 1654290.98 * multiplier;
+  const baseTxn = Math.round(6694 * multiplier);
+  const baseGross = 2558794.59 * multiplier;
+  const baseDis = -973213.69 * multiplier;
+  const aov = baseTxn > 0 ? (baseNet / baseTxn).toFixed(2) : '247.13';
+
   // 1. Overall KPI by View Mode
   const dailyKPI = [
     { param: 'Gross Sales', yesterday: '2,558,794.59', mtd: '18,452,190.00', lmtd: '17,210,480.00', trends: '+7.2%', lm: '68,410,250.00', ly: '52,140,800.00' },
@@ -37,14 +52,14 @@ export async function GET(req: Request) {
   ];
 
   // 2. AOV Bucket Analysis (Matching attached image exactly)
-  const aovBuckets = [
-    { bucket: '0-100', col1: '0.1% | 3', col2: '0.1% | 4', col3: '0.1% | 59', col4: '0.1% | 26' },
-    { bucket: '100-200', col1: '2.8% | 457', col2: '3.1% | 565', col3: '2.5% | 3455', col4: '4.1% | 4946' },
-    { bucket: '200-300', col1: '18.1% | 2386', col2: '19% | 2422', col3: '21.9% | 21811', col4: '21.3% | 17537' },
-    { bucket: '300-400', col1: '32.8% | 3714', col2: '23.5% | 2600', col3: '28.9% | 24831', col4: '31.8% | 21720' },
-    { bucket: '400-500', col1: '28.9% | 2574', col2: '31.7% | 3016', col3: '28.2% | 20363', col4: '24.9% | 14306' },
-    { bucket: '500-600', col1: '11% | 841', col2: '15.9% | 1323', col3: '12% | 7184', col4: '10.6% | 5011' },
-    { bucket: '>600', col1: '0% | 0', col2: '0% | 0', col3: '6.8% | 2645', col4: '7.5% | 2599' },
+ const aovBuckets = [
+    { bucket: '0-100', col1: `0.1% | ${Math.max(1, Math.round(3 * multiplier))}`, col2: `0.1% | ${Math.max(1, Math.round(4 * multiplier))}`, col3: `0.1% | ${Math.max(1, Math.round(59 * multiplier))}`, col4: `0.1% | ${Math.max(1, Math.round(26 * multiplier))}` },
+    { bucket: '100-200', col1: `2.8% | ${Math.round(457 * multiplier)}`, col2: `3.1% | ${Math.round(565 * multiplier)}`, col3: `2.5% | ${Math.round(3455 * multiplier)}`, col4: `4.1% | ${Math.round(4946 * multiplier)}` },
+    { bucket: '200-300', col1: `18.1% | ${Math.round(2386 * multiplier)}`, col2: `19% | ${Math.round(2422 * multiplier)}`, col3: `21.9% | ${Math.round(21811 * multiplier)}`, col4: `21.3% | ${Math.round(17537 * multiplier)}` },
+    { bucket: '300-400', col1: `32.8% | ${Math.round(3714 * multiplier)}`, col2: `23.5% | ${Math.round(2600 * multiplier)}`, col3: `28.9% | ${Math.round(24831 * multiplier)}`, col4: `31.8% | ${Math.round(21720 * multiplier)}` },
+    { bucket: '400-500', col1: `28.9% | ${Math.round(2574 * multiplier)}`, col2: `31.7% | ${Math.round(3016 * multiplier)}`, col3: `28.2% | ${Math.round(20363 * multiplier)}`, col4: `24.9% | ${Math.round(14306 * multiplier)}` },
+    { bucket: '500-600', col1: `11% | ${Math.round(841 * multiplier)}`, col2: `15.9% | ${Math.round(1323 * multiplier)}`, col3: `12% | ${Math.round(7184 * multiplier)}`, col4: `10.6% | ${Math.round(5011 * multiplier)}` },
+    { bucket: '>600', col1: '0% | 0', col2: '0% | 0', col3: `6.8% | ${Math.round(2645 * multiplier)}`, col4: `7.5% | ${Math.round(2599 * multiplier)}` },
   ];
 
   // 3. Discount Bucket Analysis (Matching attached image exactly)
