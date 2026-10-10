@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     { param: 'Breached Orders O2D', ftdSwiggy: '817.0', ftdZomato: '369.0', ftdAll: '1186.0', mtdSwiggy: '4873.0', mtdZomato: '3031.0', mtdAll: '7904.0' },
   ];
 
-  // Raw array rows: [code, name, region, brand, ftdOrders, ftdKpt, ftdKptP80, ftdKptMed, ftdO2d, ftdO2dP80, ftdO2dMed, mtdOrders, mtdKpt, mtdKptP80, mtdKptMed, mtdO2d, mtdO2dP80, mtdO2dMed]
+  // 2D Array format: duplicate keys undadaniki chance ledu
   const rawData: (string | number)[][] = [
     ['FZBBLR023', 'Tata Sherwood', 'KA', 'Frozen Bottle', 24.0, 5.89, 8.0, 4.8, 28.11, 36.16, 25.6, 137.0, 6.48, 8.4, 5.6, 25.65, 32.3, 23.0],
     ['FZBUDP001', 'Manipal', 'KA', 'Frozen Bottle', 21.0, 5.4, 7.6, 4.4, 19.85, 24.2, 17.4, 103.0, 7.62, 9.86, 6.0, 20.92, 25.08, 19.1],
