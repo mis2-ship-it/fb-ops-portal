@@ -4,8 +4,8 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const brand = searchParams.get('brand') || 'ALL';
-  const region = searchParams.get('region') || 'KA';
+  const brand = (searchParams.get('brand') || 'ALL').trim();
+  const region = (searchParams.get('region') || 'KA').trim();
   const platform = (searchParams.get('platform') || 'Swiggy').toLowerCase();
 
   const overall = [
@@ -20,27 +20,49 @@ export async function GET(req: NextRequest) {
     { param: 'Breached Orders O2D', ftdSwiggy: '817.0', ftdZomato: '369.0', ftdAll: '1186.0', mtdSwiggy: '4873.0', mtdZomato: '3031.0', mtdAll: '7904.0' },
   ];
 
-  const storesMaster: any[] = [
-    { code: 'FZBBLR023', name: 'Tata Sherwood', region: 'KA', brand: 'Frozen Bottle', ftdOrders: 24.0, ftdKpt: 5.89, ftdKptP80: 8.0, ftdKptMed: 4.8, ftdO2d: 28.11, ftdO2dP80: 36.16, ftdO2dMed: 25.6, mtdOrders: 137.0, mtdKpt: 6.48, mtdKptP80: 8.4, mtdKptMed: 5.6, mtdO2d: 25.65, mtdO2dP80: 32.3, mtdO2dMed: 23.0 },
-    { code: 'FZBUDP001', name: 'Manipal', region: 'KA', brand: 'Frozen Bottle', ftdOrders: 21.0, ftdKpt: 5.4, ftdKptP80: 7.6, ftdKptMed: 4.4, ftdO2d: 19.85, ftdO2dP80: 24.2, ftdO2dMed: 17.4, mtdOrders: 103.0, mtdKpt: 7.62, mtdKptP80: 9.86, mtdKptMed: 6.0, mtdO2d: 20.92, mtdO2dP80: 25.08, mtdO2dMed: 19.1 },
-    { code: 'FZBBLR029', name: 'Tumkur', region: 'KA', brand: 'Frozen Bottle', ftdOrders: 15.0, ftdKpt: 10.71, ftdKptP80: 20.12, ftdKptMed: 7.4, ftdO2d: 31.17, ftdO2dP80: 44.7, ftdO2dMed: 27.0, mtdOrders: 113.0, mtdKpt: 10.92, mtdKptP80: 17.42, mtdKptMed: 8.3, mtdO2d: 29.41, mtdO2dP80: 39.66, mtdO2dMed: 26.9 },
-    { code: 'FZBBLR017', name: 'Kempfort', region: 'KA', brand: 'Frozen Bottle', ftdOrders: 27.0, ftdKpt: 15.46, ftdKptP80: 20.96, ftdKptMed: 15.2, ftdO2d: 32.48, ftdO2dP80: 40.68, ftdO2dMed: 31.8, mtdOrders: 175.0, mtdKpt: 15.02, mtdKptP80: 20.28, mtdKptMed: 13.3, mtdO2d: 32.56, mtdO2dP80: 43.92, mtdO2dMed: 28.4 },
-    { code: 'FZBBLR025', name: 'Whitefield', region: 'KA', brand: 'Frozen Bottle', ftdOrders: 25.0, ftdKpt: 5.97, ftdKptP80: 10.78, ftdKptMed: 4.0, ftdO2d: 31.86, ftdO2dP80: 38.04, ftdO2dMed: 29.6, mtdOrders: 158.0, mtdKpt: 6.24, mtdKptP80: 11.06, mtdKptMed: 4.45, mtdO2d: 29.4, mtdO2dP80: 37.8, mtdO2dMed: 28.55 },
-    { code: 'FZBBLR037', name: 'Miraya Rose', region: 'KA', brand: 'Madno', ftdOrders: 17.0, ftdKpt: 5.28, ftdKptP80: 8.16, ftdKptMed: 3.8, ftdO2d: 31.56, ftdO2dP80: 36.52, ftdO2dMed: 33.3, mtdOrders: 101.0, mtdKpt: 9.48, mtdKptP80: 14.3, mtdKptMed: 7.5, mtdO2d: 33.33, mtdO2dP80: 42.9, mtdO2dMed: 31.3 },
-    { code: 'FZBBLR032', name: 'ITPL', region: 'KA', brand: 'Boba Bar', ftdOrders: 19.0, ftdKpt: 6.87, ftdKptP80: 12.44, ftdKptMed: 6.9, ftdO2d: 33.63, ftdO2dP80: 40.84, ftdO2dMed: 29.7, mtdOrders: 97.0, mtdKpt: 8.17, mtdKptP80: 13.94, mtdKptMed: 7.2, mtdO2d: 34.51, mtdO2dP80: 44.86, mtdO2dMed: 32.6 },
-    { code: 'FZBBLR012', name: 'Gunjur', region: 'KA', brand: 'Frozen Bottle', ftdOrders: 22.0, ftdKpt: 8.51, ftdKptP80: 11.46, ftdKptMed: 7.0, ftdO2d: 33.55, ftdO2dP80: 44.36, ftdO2dMed: 34.95, mtdOrders: 124.0, mtdKpt: 11.73, mtdKptP80: 18.2, mtdKptMed: 8.65, mtdO2d: 34.2, mtdO2dP80: 44.66, mtdO2dMed: 31.65 },
-    { code: 'FZBBLR034', name: 'AECS Layout', region: 'KA', brand: 'Frozen Bottle', ftdOrders: 21.0, ftdKpt: 9.0, ftdKptP80: 13.6, ftdKptMed: 7.6, ftdO2d: 32.76, ftdO2dP80: 41.3, ftdO2dMed: 30.8, mtdOrders: 116.0, mtdKpt: 7.75, mtdKptP80: 10.8, ftdKptMed: 6.2, mtdO2d: 27.28, mtdO2dP80: 35.1, mtdO2dMed: 26.0 },
-    { code: 'FZBBLR040', name: 'Shivamogga', region: 'KA', brand: 'Lubov', ftdOrders: 13.0, ftdKpt: 3.46, ftdKptP80: 5.48, ftdKptMed: 3.6, ftdO2d: 20.48, ftdO2dP80: 31.82, ftdO2dMed: 17.1, mtdOrders: 95.0, mtdKpt: 5.67, mtdKptP80: 9.1, mtdKptMed: 5.3, mtdO2d: 23.57, mtdO2dP80: 29.86, mtdO2dMed: 20.7 },
-    { code: 'FZBBLR013', name: 'Hsr Layout', region: 'KA', brand: 'Frozen Bottle', ftdOrders: 32.0, ftdKpt: 8.81, ftdKptP80: 14.12, ftdKptMed: 6.8, ftdO2d: 27.63, ftdO2dP80: 36.3, ftdO2dMed: 24.15, mtdOrders: 168.0, mtdKpt: 8.17, mtdKptP80: 11.24, mtdKptMed: 6.45, mtdO2d: 26.98, mtdO2dP80: 34.02, mtdO2dMed: 24.4 },
-    { code: 'CFIBLR019', name: 'Sarjapur Road', region: 'KA', brand: 'Madno', ftdOrders: 1.0, ftdKpt: 1.5, ftdKptP80: 1.5, ftdKptMed: 1.5, ftdO2d: 13.2, ftdO2dP80: 13.2, ftdO2dMed: 13.2, mtdOrders: 7.0, mtdKpt: 4.3, mtdKptP80: 5.88, mtdKptMed: 2.5, mtdO2d: 23.87, mtdO2dP80: 26.9, mtdO2dMed: 24.4 },
-    { code: 'FZBBLR008', name: 'BTM Layout', region: 'KA', brand: 'Frozen Bottle', ftdOrders: 19.0, ftdKpt: 7.07, ftdKptP80: 12.12, ftdKptMed: 6.2, ftdO2d: 24.17, ftdO2dP80: 29.88, ftdO2dMed: 23.3, mtdOrders: 154.0, mtdKpt: 11.04, mtdKptP80: 16.38, mtdKptMed: 9.9, mtdO2d: 29.04, mtdO2dP80: 37.26, mtdO2dMed: 27.75 },
-    { code: 'FZBBLR019', name: 'Koramangala', region: 'KA', brand: 'Frozen Bottle', ftdOrders: 26.0, ftdKpt: 12.14, ftdKptP80: 18.9, ftdKptMed: 9.9, ftdO2d: 41.13, ftdO2dP80: 54.9, ftdO2dMed: 38.3, mtdOrders: 146.0, mtdKpt: 11.33, mtdKptP80: 18.0, mtdKptMed: 9.0, mtdO2d: 33.46, mtdO2dP80: 43.2, mtdO2dMed: 32.35 },
-    { code: 'FZBBLR002', name: 'Banashankari', region: 'KA', brand: 'Boba Bar', ftdOrders: 26.0, ftdKpt: 6.67, ftdKptP80: 9.2, ftdKptMed: 6.5, ftdO2d: 25.55, ftdO2dP80: 34.4, ftdO2dMed: 23.75, mtdOrders: 147.0, mtdKpt: 6.17, mtdKptP80: 9.7, mtdKptMed: 5.2, mtdO2d: 28.52, mtdO2dP80: 39.08, mtdO2dMed: 26.1 },
-    { code: 'FZBMUM001', name: 'Bandra West', region: 'MH', brand: 'Frozen Bottle', ftdOrders: 22.0, ftdKpt: 7.1, ftdKptP80: 10.4, ftdKptMed: 6.1, ftdO2d: 28.4, ftdO2dP80: 35.1, ftdO2dMed: 26.2, mtdOrders: 142.0, mtdKpt: 7.8, mtdKptP80: 11.2, mtdKptMed: 6.4, mtdO2d: 29.1, mtdO2dP80: 36.8, mtdO2dMed: 27.0 },
-    { code: 'FZBMUM002', name: 'Khar', region: 'MH', brand: 'Frozen Bottle', ftdOrders: 18.0, ftdKpt: 6.4, ftdKptP80: 9.1, ftdKptMed: 5.8, ftdO2d: 29.8, ftdO2dP80: 37.2, ftdO2dMed: 28.0, mtdOrders: 131.0, mtdKpt: 6.9, mtdKptP80: 10.5, mtdKptMed: 6.0, mtdO2d: 28.9, mtdO2dP80: 35.6, mtdO2dMed: 26.8 },
-    { code: 'FZBMAA001', name: 'Anna Nagar', region: 'TN', brand: 'Frozen Bottle', ftdOrders: 20.0, ftdKpt: 8.2, ftdKptP80: 11.5, ftdKptMed: 7.1, ftdO2d: 31.4, ftdO2dP80: 39.0, ftdO2dMed: 29.5, mtdOrders: 139.0, mtdKpt: 8.7, mtdKptP80: 12.1, mtdKptMed: 7.5, mtdO2d: 30.8, mtdO2dP80: 38.2, mtdO2dMed: 29.1 },
-    { code: 'FZBCOK001', name: 'Kakkanad', region: 'Kerela', brand: 'Frozen Bottle', ftdOrders: 14.0, ftdKpt: 9.1, ftdKptP80: 13.0, ftdKptMed: 8.0, ftdO2d: 27.5, ftdO2dP80: 34.0, ftdO2dMed: 25.0, mtdOrders: 98.0, mtdKpt: 9.5, mtdKptP80: 13.8, mtdKptMed: 8.4, mtdO2d: 28.2, mtdO2dP80: 35.1, mtdO2dMed: 26.0 },
+  // Raw array rows: [code, name, region, brand, ftdOrders, ftdKpt, ftdKptP80, ftdKptMed, ftdO2d, ftdO2dP80, ftdO2dMed, mtdOrders, mtdKpt, mtdKptP80, mtdKptMed, mtdO2d, mtdO2dP80, mtdO2dMed]
+  const rawData: (string | number)[][] = [
+    ['FZBBLR023', 'Tata Sherwood', 'KA', 'Frozen Bottle', 24.0, 5.89, 8.0, 4.8, 28.11, 36.16, 25.6, 137.0, 6.48, 8.4, 5.6, 25.65, 32.3, 23.0],
+    ['FZBUDP001', 'Manipal', 'KA', 'Frozen Bottle', 21.0, 5.4, 7.6, 4.4, 19.85, 24.2, 17.4, 103.0, 7.62, 9.86, 6.0, 20.92, 25.08, 19.1],
+    ['FZBBLR029', 'Tumkur', 'KA', 'Frozen Bottle', 15.0, 10.71, 20.12, 7.4, 31.17, 44.7, 27.0, 113.0, 10.92, 17.42, 8.3, 29.41, 39.66, 26.9],
+    ['FZBBLR017', 'Kempfort', 'KA', 'Frozen Bottle', 27.0, 15.46, 20.96, 15.2, 32.48, 40.68, 31.8, 175.0, 15.02, 20.28, 13.3, 32.56, 43.92, 28.4],
+    ['FZBBLR025', 'Whitefield', 'KA', 'Frozen Bottle', 25.0, 5.97, 10.78, 4.0, 31.86, 38.04, 29.6, 158.0, 6.24, 11.06, 4.45, 29.4, 37.8, 28.55],
+    ['FZBBLR037', 'Miraya Rose', 'KA', 'Madno', 17.0, 5.28, 8.16, 3.8, 31.56, 36.52, 33.3, 101.0, 9.48, 14.3, 7.5, 33.33, 42.9, 31.3],
+    ['FZBBLR032', 'ITPL', 'KA', 'Boba Bar', 19.0, 6.87, 12.44, 6.9, 33.63, 40.84, 29.7, 97.0, 8.17, 13.94, 7.2, 34.51, 44.86, 32.6],
+    ['FZBBLR012', 'Gunjur', 'KA', 'Frozen Bottle', 22.0, 8.51, 11.46, 7.0, 33.55, 44.36, 34.95, 124.0, 11.73, 18.2, 8.65, 34.2, 44.66, 31.65],
+    ['FZBBLR034', 'AECS Layout', 'KA', 'Frozen Bottle', 21.0, 9.0, 13.6, 7.6, 32.76, 41.3, 30.8, 116.0, 7.75, 10.8, 6.2, 27.28, 35.1, 26.0],
+    ['FZBBLR040', 'Shivamogga', 'KA', 'Lubov', 13.0, 3.46, 5.48, 3.6, 20.48, 31.82, 17.1, 95.0, 5.67, 9.1, 5.3, 23.57, 29.86, 20.7],
+    ['FZBBLR013', 'Hsr Layout', 'KA', 'Frozen Bottle', 32.0, 8.81, 14.12, 6.8, 27.63, 36.3, 24.15, 168.0, 8.17, 11.24, 6.45, 26.98, 34.02, 24.4],
+    ['CFIBLR019', 'Sarjapur Road', 'KA', 'Madno', 1.0, 1.5, 1.5, 1.5, 13.2, 13.2, 13.2, 7.0, 4.3, 5.88, 2.5, 23.87, 26.9, 24.4],
+    ['FZBBLR008', 'BTM Layout', 'KA', 'Frozen Bottle', 19.0, 7.07, 12.12, 6.2, 24.17, 29.88, 23.3, 154.0, 11.04, 16.38, 9.9, 29.04, 37.26, 27.75],
+    ['FZBBLR019', 'Koramangala', 'KA', 'Frozen Bottle', 26.0, 12.14, 18.9, 9.9, 41.13, 54.9, 38.3, 146.0, 11.33, 18.0, 9.0, 33.46, 43.2, 32.35],
+    ['FZBBLR002', 'Banashankari', 'KA', 'Boba Bar', 26.0, 6.67, 9.2, 6.5, 25.55, 34.4, 23.75, 147.0, 6.17, 9.7, 5.2, 28.52, 39.08, 26.1],
+    ['FZBMUM001', 'Bandra West', 'MH', 'Frozen Bottle', 22.0, 7.1, 10.4, 6.1, 28.4, 35.1, 26.2, 142.0, 7.8, 11.2, 6.4, 29.1, 36.8, 27.0],
+    ['FZBMUM002', 'Khar', 'MH', 'Frozen Bottle', 18.0, 6.4, 9.1, 5.8, 29.8, 37.2, 28.0, 131.0, 6.9, 10.5, 6.0, 28.9, 35.6, 26.8],
+    ['FZBMAA001', 'Anna Nagar', 'TN', 'Frozen Bottle', 20.0, 8.2, 11.5, 7.1, 31.4, 39.0, 29.5, 139.0, 8.7, 12.1, 7.5, 30.8, 38.2, 29.1],
+    ['FZBCOK001', 'Kakkanad', 'Kerela', 'Frozen Bottle', 14.0, 9.1, 13.0, 8.0, 27.5, 34.0, 25.0, 98.0, 9.5, 13.8, 8.4, 28.2, 35.1, 26.0],
   ];
+
+  const storesMaster = rawData.map((row) => ({
+    code: String(row[0]),
+    name: String(row[1]),
+    region: String(row[2]),
+    brand: String(row[3]),
+    ftdOrders: Number(row[4]),
+    ftdKpt: Number(row[5]),
+    ftdKptP80: Number(row[6]),
+    ftdKptMed: Number(row[7]),
+    ftdO2d: Number(row[8]),
+    ftdO2dP80: Number(row[9]),
+    ftdO2dMed: Number(row[10]),
+    mtdOrders: Number(row[11]),
+    mtdKpt: Number(row[12]),
+    mtdKptP80: Number(row[13]),
+    mtdKptMed: Number(row[14]),
+    mtdO2d: Number(row[15]),
+    mtdO2dP80: Number(row[16]),
+    mtdO2dMed: Number(row[17]),
+  }));
 
   const filteredStores = storesMaster.filter((s) => {
     if (region !== 'ALL' && s.region !== region) return false;
