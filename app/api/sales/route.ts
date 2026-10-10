@@ -386,7 +386,7 @@ export async function GET(req: NextRequest) {
     };
   });
 
-  let selectedOverallKPI = dailyKPI;
+  let selectedOverallKPI: any[] = dailyKPI;
   if (viewType === 'weekly') selectedOverallKPI = weeklyKPI;
   else if (viewType === 'monthly') selectedOverallKPI = monthlyKPI;
   else if (viewType === 'live') selectedOverallKPI = liveKPI;
