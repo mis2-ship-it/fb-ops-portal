@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
+import './globals.css';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Frozen Bottle Operations Hub',
-  description: 'Operations & Ratings Intelligence',
+  description: 'Store Performance, Customer Feedback & Operational Intelligence',
 };
 
 export default function RootLayout({
@@ -11,8 +12,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body style={{ margin: 0, padding: 0, backgroundColor: '#090d16', color: '#f8fafc' }}>
+    <html lang="en" className="dark">
+      <body className="bg-slate-950 text-slate-100 min-h-screen antialiased">
         {children}
       </body>
     </html>
