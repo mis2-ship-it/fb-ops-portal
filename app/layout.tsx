@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Frozen Bottle Operations Hub',
@@ -11,8 +12,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body style={{ margin: 0, padding: 0, backgroundColor: '#070b14', color: '#f1f5f9' }}>
+    <html lang="en" className="dark">
+      <body className="bg-slate-950 text-slate-100 min-h-screen antialiased">
         {children}
       </body>
     </html>
