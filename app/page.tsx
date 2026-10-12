@@ -4,18 +4,23 @@ import React, { useState, useEffect, useCallback } from 'react';
 
 type MainTab = 'operations' | 'sales' | 'kpt';
 type SalesSubView = 'daily' | 'weekly' | 'monthly';
+type RatingsPlatform = 'overview' | 'google' | 'swiggy' | 'zomato';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<MainTab>('sales');
+
+  // Sales Hub State
   const [salesSubView, setSalesSubView] = useState<SalesSubView>('daily');
   const [salesMonth, setSalesMonth] = useState<string>('Oct-26');
   const [salesBrand, setSalesBrand] = useState<string>('ALL');
   const [salesRegion, setSalesRegion] = useState<string>('ALL');
   const [salesSource, setSalesSource] = useState<string>('ALL');
   const [salesSession, setSalesSession] = useState<string>('ALL');
-
   const [salesData, setSalesData] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Ratings Tab Sub-Navigation
+  const [ratingPlatform, setRatingPlatform] = useState<RatingsPlatform>('overview');
 
   const fetchSalesData = useCallback(() => {
     setIsRefreshing(true);
@@ -86,39 +91,118 @@ export default function Home() {
       </div>
 
       {/* ========================================================================= */}
-      {/* TAB 1: OPERATIONS & RATINGS (WITH GOOGLE RATINGS RESTORED) */}
+      {/* 1. OPERATIONS & RATINGS TAB (FULL PREVIOUS FORMAT RESTORED) */}
       {/* ========================================================================= */}
       {activeTab === 'operations' && (
         <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Platform Sub-Tabs */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0d1527', padding: '12px 18px', borderRadius: '12px', border: '1px solid #1e293b', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {[
+                { id: 'overview', label: '⭐ Overview Summary' },
+                { id: 'google', label: '🌐 Google Reviews' },
+                { id: 'swiggy', label: '🟠 Swiggy Ratings' },
+                { id: 'zomato', label: '🔴 Zomato Ratings' },
+              ].map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setRatingPlatform(p.id as RatingsPlatform)}
+                  style={{
+                    padding: '7px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    backgroundColor: ratingPlatform === p.id ? '#4f46e5' : '#070b14',
+                    color: ratingPlatform === p.id ? '#fff' : '#94a3b8',
+                  }}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <span style={{ fontSize: '12px', color: '#94a3b8' }}>Tracking 81 COCO Stores | Auto-synced Daily</span>
+          </div>
+
+          {/* Top Scorecard Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
             <div style={{ backgroundColor: '#0d1527', padding: '16px', borderRadius: '12px', border: '1px solid #1e293b' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Overall Scorecard</span>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Consolidated Rating</span>
               <p style={{ fontSize: '24px', fontWeight: 700, color: '#f59e0b', margin: '6px 0 4px 0' }}>4.34 ★</p>
               <span style={{ fontSize: '11px', color: '#10b981' }}>+0.05 vs Last Month</span>
             </div>
             <div style={{ backgroundColor: '#0d1527', padding: '16px', borderRadius: '12px', border: '1px solid #1e293b' }}>
               <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Google Reviews</span>
               <p style={{ fontSize: '24px', fontWeight: 700, color: '#38bdf8', margin: '6px 0 4px 0' }}>4.38 ★</p>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>38,910 Total Ratings</span>
+              <span style={{ fontSize: '11px', color: '#94a3b8' }}>38,910 Total Reviews</span>
             </div>
             <div style={{ backgroundColor: '#0d1527', padding: '16px', borderRadius: '12px', border: '1px solid #1e293b' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Zomato Rating</span>
-              <p style={{ fontSize: '24px', fontWeight: 700, color: '#f43f5e', margin: '6px 0 4px 0' }}>4.28 ★</p>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>42,120 Total Reviews</span>
-            </div>
-            <div style={{ backgroundColor: '#0d1527', padding: '16px', borderRadius: '12px', border: '1px solid #1e293b' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Swiggy Rating</span>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Swiggy Food Rating</span>
               <p style={{ fontSize: '24px', fontWeight: 700, color: '#fb923c', margin: '6px 0 4px 0' }}>4.36 ★</p>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>58,490 Total Reviews</span>
+              <span style={{ fontSize: '11px', color: '#94a3b8' }}>58,490 Orders Rated</span>
+            </div>
+            <div style={{ backgroundColor: '#0d1527', padding: '16px', borderRadius: '12px', border: '1px solid #1e293b' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Zomato Food Rating</span>
+              <p style={{ fontSize: '24px', fontWeight: 700, color: '#f43f5e', margin: '6px 0 4px 0' }}>4.28 ★</p>
+              <span style={{ fontSize: '11px', color: '#94a3b8' }}>42,120 Orders Rated</span>
             </div>
           </div>
 
+          {/* Star Distribution & Review Health Panels */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+            <div style={{ backgroundColor: '#0d1527', padding: '16px', borderRadius: '12px', border: '1px solid #1e293b' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#e2e8f0', textTransform: 'uppercase' }}>⭐ Rating Distribution Mix</span>
+              <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
+                {[
+                  { star: '5 Star', pct: '68%', count: '94,870', color: '#10b981' },
+                  { star: '4 Star', pct: '18%', count: '25,110', color: '#38bdf8' },
+                  { star: '3 Star', pct: '7%', count: '9,760', color: '#f59e0b' },
+                  { star: '2 Star', pct: '3%', count: '4,180', color: '#fb923c' },
+                  { star: '1 Star', pct: '4%', count: '5,580', color: '#f43f5e' },
+                ].map((b) => (
+                  <div key={b.star} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ width: '50px', color: '#94a3b8' }}>{b.star}</span>
+                    <div style={{ flex: 1, backgroundColor: '#070b14', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: b.pct, backgroundColor: b.color, height: '100%' }} />
+                    </div>
+                    <span style={{ width: '40px', textAlign: 'right', fontWeight: 600 }}>{b.pct}</span>
+                    <span style={{ width: '60px', textAlign: 'right', color: '#64748b' }}>({b.count})</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: '#0d1527', padding: '16px', borderRadius: '12px', border: '1px solid #1e293b' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#e2e8f0', textTransform: 'uppercase' }}>📈 Sentiment & Response Efficiency</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '14px' }}>
+                <div style={{ backgroundColor: '#070b14', padding: '12px', borderRadius: '8px', border: '1px solid #1e293b' }}>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>Positive Sentiment</span>
+                  <p style={{ fontSize: '20px', fontWeight: 700, color: '#10b981', margin: '4px 0 0 0' }}>86.2%</p>
+                </div>
+                <div style={{ backgroundColor: '#070b14', padding: '12px', borderRadius: '8px', border: '1px solid #1e293b' }}>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>Negative Complaints</span>
+                  <p style={{ fontSize: '20px', fontWeight: 700, color: '#f43f5e', margin: '4px 0 0 0' }}>6.8%</p>
+                </div>
+                <div style={{ backgroundColor: '#070b14', padding: '12px', borderRadius: '8px', border: '1px solid #1e293b' }}>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>Response Rate</span>
+                  <p style={{ fontSize: '20px', fontWeight: 700, color: '#38bdf8', margin: '4px 0 0 0' }}>94.1%</p>
+                </div>
+                <div style={{ backgroundColor: '#070b14', padding: '12px', borderRadius: '8px', border: '1px solid #1e293b' }}>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>Critical Outlets (&lt;4.0)</span>
+                  <p style={{ fontSize: '20px', fontWeight: 700, color: '#e11d48', margin: '4px 0 0 0' }}>4 Stores</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Full Detailed Store Ratings Matrix */}
           <div style={{ backgroundColor: '#0d1527', borderRadius: '12px', border: '1px solid #1e293b', overflow: 'hidden' }}>
             <div style={{ padding: '14px 20px', borderBottom: '1px solid #1e293b', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', color: '#e2e8f0', display: 'flex', justifyContent: 'space-between' }}>
-              <span>⭐ STORE RATING & CUSTOMER FEEDBACK BREAKDOWN</span>
+              <span>⭐ STORE RATING & CUSTOMER FEEDBACK BREAKDOWN (ALL PLATFORMS)</span>
               <span style={{ color: '#94a3b8' }}>81 Stores Monitored</span>
             </div>
-            <div style={{ overflowX: 'auto', maxHeight: '520px' }}>
+            <div style={{ overflowX: 'auto', maxHeight: '500px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead style={{ backgroundColor: '#070b14', color: '#94a3b8', borderBottom: '1px solid #1e293b', position: 'sticky', top: 0 }}>
                   <tr>
@@ -127,8 +211,8 @@ export default function Home() {
                     <th style={{ padding: '12px 16px', textAlign: 'right' }}>Google Rating</th>
                     <th style={{ padding: '12px 16px', textAlign: 'right' }}>Zomato Rating</th>
                     <th style={{ padding: '12px 16px', textAlign: 'right' }}>Swiggy Rating</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'right' }}>Overall Avg</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'center' }}>Health Status</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'right' }}>Consolidated</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'center' }}>Status</th>
                   </tr>
                 </thead>
                 <tbody style={{ fontFamily: 'monospace' }}>
@@ -166,7 +250,7 @@ export default function Home() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: SALES HUB (DYNAMIC MULTI-SUMMARY LAYOUT) */}
+      {/* 2. SALES HUB (UNTOUCHED & DYNAMIC AS CONFIGURED) */}
       {/* ========================================================================= */}
       {activeTab === 'sales' && (
         <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -290,7 +374,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 1. SALES SUMMARY TABLE (DYNAMIC HEADERS) */}
+          {/* 1. SALES SUMMARY TABLE (DYNAMIC HEADERS RESTORED) */}
           <div style={{ backgroundColor: '#0d1527', borderRadius: '12px', border: '1px solid #1e293b', overflow: 'hidden' }}>
             <div style={{ padding: '14px 20px', borderBottom: '1px solid #1e293b', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', color: '#e2e8f0' }}>
               📈 {salesSubView.toUpperCase()} SALES SUMMARY
@@ -584,25 +668,26 @@ export default function Home() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 3: KPT & O2D TAB (KITCHEN PREP & DELIVERY INTELLIGENCE) */}
+      {/* 3. KPT & O2D TAB (FULL PREVIOUS FORMAT RESTORED) */}
       {/* ========================================================================= */}
       {activeTab === 'kpt' && (
         <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Executive Speed Overview */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
             <div style={{ backgroundColor: '#0d1527', padding: '16px', borderRadius: '12px', border: '1px solid #1e293b' }}>
               <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Avg Kitchen Prep (KPT)</span>
               <p style={{ fontSize: '24px', fontWeight: 700, color: '#10b981', margin: '6px 0 4px 0' }}>7.4 min</p>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>Target: &lt; 9.0 min</span>
+              <span style={{ fontSize: '11px', color: '#10b981' }}>Target &lt; 9.0 min (Compliant)</span>
             </div>
             <div style={{ backgroundColor: '#0d1527', padding: '16px', borderRadius: '12px', border: '1px solid #1e293b' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Avg Rider Wait</span>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Avg Rider Wait (RWT)</span>
               <p style={{ fontSize: '24px', fontWeight: 700, color: '#f59e0b', margin: '6px 0 4px 0' }}>4.2 min</p>
               <span style={{ fontSize: '11px', color: '#94a3b8' }}>Target: &lt; 5.0 min</span>
             </div>
             <div style={{ backgroundColor: '#0d1527', padding: '16px', borderRadius: '12px', border: '1px solid #1e293b' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Avg Order to Delivery (O2D)</span>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Order to Delivery (O2D)</span>
               <p style={{ fontSize: '24px', fontWeight: 700, color: '#38bdf8', margin: '6px 0 4px 0' }}>26.8 min</p>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>Target: &lt; 30.0 min</span>
+              <span style={{ fontSize: '11px', color: '#10b981' }}>Target: &lt; 30.0 min</span>
             </div>
             <div style={{ backgroundColor: '#0d1527', padding: '16px', borderRadius: '12px', border: '1px solid #1e293b' }}>
               <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>KPT Breaches (&gt;15 min)</span>
@@ -611,12 +696,59 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Time Bucket Distribution Breakdown */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+            <div style={{ backgroundColor: '#0d1527', padding: '16px', borderRadius: '12px', border: '1px solid #1e293b' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#e2e8f0', textTransform: 'uppercase' }}>⏱️ Kitchen Prep Time (KPT) Distribution</span>
+              <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
+                {[
+                  { b: '< 7 min (Fast)', pct: '62.4%', orders: '54,120', col: '#10b981' },
+                  { b: '7 - 10 min (Normal)', pct: '26.8%', orders: '23,240', col: '#38bdf8' },
+                  { b: '10 - 15 min (Delayed)', pct: '8.4%', orders: '7,290', col: '#f59e0b' },
+                  { b: '> 15 min (Breached)', pct: '2.4%', orders: '2,080', col: '#f43f5e' },
+                ].map((row) => (
+                  <div key={row.b} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ width: '130px', color: '#94a3b8' }}>{row.b}</span>
+                    <div style={{ flex: 1, backgroundColor: '#070b14', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: row.pct, backgroundColor: row.col, height: '100%' }} />
+                    </div>
+                    <span style={{ width: '45px', textAlign: 'right', fontWeight: 600 }}>{row.pct}</span>
+                    <span style={{ width: '60px', textAlign: 'right', color: '#64748b' }}>({row.orders})</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: '#0d1527', padding: '16px', borderRadius: '12px', border: '1px solid #1e293b' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#e2e8f0', textTransform: 'uppercase' }}>🛵 Fleet & Delivery Slicing (O2D Splits)</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '14px' }}>
+                <div style={{ backgroundColor: '#070b14', padding: '12px', borderRadius: '8px', border: '1px solid #1e293b' }}>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>Rider Assigned Time</span>
+                  <p style={{ fontSize: '18px', fontWeight: 700, color: '#38bdf8', margin: '4px 0 0 0' }}>2.1 min</p>
+                </div>
+                <div style={{ backgroundColor: '#070b14', padding: '12px', borderRadius: '8px', border: '1px solid #1e293b' }}>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>Rider Transit Time</span>
+                  <p style={{ fontSize: '18px', fontWeight: 700, color: '#10b981', margin: '4px 0 0 0' }}>14.8 min</p>
+                </div>
+                <div style={{ backgroundColor: '#070b14', padding: '12px', borderRadius: '8px', border: '1px solid #1e293b' }}>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>Avg Distance</span>
+                  <p style={{ fontSize: '18px', fontWeight: 700, color: '#f59e0b', margin: '4px 0 0 0' }}>3.4 km</p>
+                </div>
+                <div style={{ backgroundColor: '#070b14', padding: '12px', borderRadius: '8px', border: '1px solid #1e293b' }}>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>Long Deliveries (&gt;45m)</span>
+                  <p style={{ fontSize: '18px', fontWeight: 700, color: '#f43f5e', margin: '4px 0 0 0' }}>1.8%</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Store Speed of Service Leaderboard */}
           <div style={{ backgroundColor: '#0d1527', borderRadius: '12px', border: '1px solid #1e293b', overflow: 'hidden' }}>
             <div style={{ padding: '14px 20px', borderBottom: '1px solid #1e293b', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', color: '#e2e8f0', display: 'flex', justifyContent: 'space-between' }}>
-              <span>⏱️ STORE SPEED OF SERVICE & BREACH LEADERBOARD</span>
-              <span style={{ color: '#94a3b8' }}>81 Stores Measured</span>
+              <span>⏱️ OUTLET SPEED OF SERVICE & BREACH LEADERBOARD</span>
+              <span style={{ color: '#94a3b8' }}>81 Stores Monitored</span>
             </div>
-            <div style={{ overflowX: 'auto', maxHeight: '520px' }}>
+            <div style={{ overflowX: 'auto', maxHeight: '500px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead style={{ backgroundColor: '#070b14', color: '#94a3b8', borderBottom: '1px solid #1e293b', position: 'sticky', top: 0 }}>
                   <tr>
