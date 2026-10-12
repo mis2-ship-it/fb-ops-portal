@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 
 type MainView = 'Operations' | 'Sales' | 'KptO2d';
-type SalesSubView = 'live' | 'daily' | 'weekly' | 'monthly';
+type SalesSubView = 'daily' | 'weekly' | 'monthly';
 type Platform = 'Google' | 'Swiggy' | 'Zomato';
 type ChartGranularity = 'day' | 'week' | 'month';
 
@@ -21,7 +21,6 @@ export default function Home() {
   const [opsLoading, setOpsLoading] = useState(false);
 
   // Sales Hub State
-  const [salesSubView, setSalesSubView] = useState<SalesSubView>('live');
   const [salesBrand, setSalesBrand] = useState('ALL');
   const [salesRegion, setSalesRegion] = useState('ALL');
   const [salesSource, setSalesSource] = useState('ALL');
@@ -656,7 +655,7 @@ export default function Home() {
             </div>
 
             <div style={{ display: 'flex', backgroundColor: '#0f172a', padding: '3px', borderRadius: '8px', border: '1px solid #1f293d' }}>
-              {(['live', 'daily', 'weekly', 'monthly'] as SalesSubView[]).map((v) => (
+              {(['daily', 'weekly', 'monthly'] as SalesSubView[]).map((v) => (
                 <button
                   key={v}
                   onClick={() => setSalesSubView(v)}
@@ -672,7 +671,7 @@ export default function Home() {
                     textTransform: 'capitalize',
                   }}
                 >
-                  {v === 'live' ? '🔴 Live Sales' : v === 'daily' ? '📅 Daily' : v === 'weekly' ? '📆 Weekly' : '🗓️ Monthly'}
+                  {v === 'daily' ? '📅 Daily' : v === 'weekly' ? '📆 Weekly' : '🗓️ Monthly'}
                 </button>
               ))}
             </div>
@@ -767,7 +766,7 @@ export default function Home() {
           {/* Sales Summary Table */}
           <div style={{ backgroundColor: '#0f172a', border: '1px solid #1f293d', borderRadius: '10px', padding: '14px', marginBottom: '16px' }}>
             <h3 style={{ margin: '0 0 10px', fontSize: '12px', color: '#ffffff', textTransform: 'uppercase' }}>
-              📈 {salesSubView === 'live' ? 'LIVE SALES SUMMARY' : salesSubView === 'daily' ? 'DAILY SALES SUMMARY' : salesSubView === 'weekly' ? 'WEEKLY SALES SUMMARY' : 'MONTHLY SALES SUMMARY'}
+              📈 {salesSubView === 'daily' ? 'DAILY SALES SUMMARY' : salesSubView === 'weekly' ? 'WEEKLY SALES SUMMARY' : 'MONTHLY SALES SUMMARY'}
             </h3>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', minWidth: '760px' }}>
