@@ -51,7 +51,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070b14] text-slate-100 p-4 md:p-6 font-sans">
+    <main className="min-h-screen bg-[#070b14] text-slate-100 p-4 md:p-6 font-sans">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-5 border-b border-slate-800/80 gap-4">
         <div>
@@ -64,7 +64,7 @@ export default function Home() {
           <button
             onClick={() => setActiveTab('operations')}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-              activeTab === 'operations' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'
+              activeTab === 'operations' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
             }`}
           >
             📊 Operations & Ratings
@@ -80,7 +80,7 @@ export default function Home() {
           <button
             onClick={() => setActiveTab('kpt')}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-              activeTab === 'kpt' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'
+              activeTab === 'kpt' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
             }`}
           >
             ⏱️ KPT & O2D
@@ -88,6 +88,115 @@ export default function Home() {
         </div>
       </div>
 
+      {/* ========================================================================= */}
+      {/* 1. OPERATIONS & RATINGS TAB */}
+      {/* ========================================================================= */}
+      {activeTab === 'operations' && (
+        <div className="mt-5 space-y-5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-[#0d1527] p-4 rounded-xl border border-slate-800">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Overall Rating</span>
+              <p className="text-2xl font-bold text-amber-400 mt-1">4.32 ★</p>
+              <span className="text-[11px] text-emerald-400">+0.04 vs Last Month</span>
+            </div>
+            <div className="bg-[#0d1527] p-4 rounded-xl border border-slate-800">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Zomato Avg</span>
+              <p className="text-2xl font-bold text-rose-400 mt-1">4.28 ★</p>
+              <span className="text-[11px] text-slate-400">42,120 Reviews</span>
+            </div>
+            <div className="bg-[#0d1527] p-4 rounded-xl border border-slate-800">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Swiggy Avg</span>
+              <p className="text-2xl font-bold text-orange-400 mt-1">4.36 ★</p>
+              <span className="text-[11px] text-slate-400">58,490 Reviews</span>
+            </div>
+            <div className="bg-[#0d1527] p-4 rounded-xl border border-slate-800">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Critical Outlets (&lt;4.0)</span>
+              <p className="text-2xl font-bold text-rose-500 mt-1">4 Outlets</p>
+              <span className="text-[11px] text-rose-400">Immediate Action Required</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Top Rated Stores */}
+            <div className="bg-[#0d1527] rounded-xl border border-slate-800 overflow-hidden">
+              <div className="px-4 py-3 border-b border-slate-800 font-bold text-xs uppercase tracking-wider text-emerald-400 bg-[#0d1527]/80">
+                🏆 Top Rated Outlets
+              </div>
+              <div className="p-3">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-[#070b14] text-slate-400">
+                    <tr>
+                      <th className="py-2 px-3">Store Name</th>
+                      <th className="py-2 px-3">Region</th>
+                      <th className="py-2 px-3 text-right">Zomato</th>
+                      <th className="py-2 px-3 text-right">Swiggy</th>
+                      <th className="py-2 px-3 text-right">Overall</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 font-mono">
+                    {[
+                      { store: 'Indiranagar - CK', region: 'KA', z: '4.52', s: '4.61', o: '4.57' },
+                      { store: 'Koramangala', region: 'KA', z: '4.48', s: '4.55', o: '4.52' },
+                      { store: 'Besant Nagar', region: 'TN', z: '4.44', s: '4.50', o: '4.47' },
+                      { store: 'Khar', region: 'MH', z: '4.41', s: '4.49', o: '4.45' },
+                      { store: 'Whitefield', region: 'KA', z: '4.39', s: '4.46', o: '4.43' },
+                    ].map((row, i) => (
+                      <tr key={i}>
+                        <td className="py-2 px-3 font-sans text-slate-200">{row.store}</td>
+                        <td className="py-2 px-3 font-sans text-slate-400">{row.region}</td>
+                        <td className="py-2 px-3 text-right text-rose-300">{row.z} ★</td>
+                        <td className="py-2 px-3 text-right text-orange-300">{row.s} ★</td>
+                        <td className="py-2 px-3 text-right text-emerald-400 font-bold">{row.o} ★</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Outlets Requiring Attention */}
+            <div className="bg-[#0d1527] rounded-xl border border-slate-800 overflow-hidden">
+              <div className="px-4 py-3 border-b border-slate-800 font-bold text-xs uppercase tracking-wider text-rose-400 bg-[#0d1527]/80">
+                ⚠️ Outlets Requiring Attention (&lt; 4.10)
+              </div>
+              <div className="p-3">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-[#070b14] text-slate-400">
+                    <tr>
+                      <th className="py-2 px-3">Store Name</th>
+                      <th className="py-2 px-3">Region</th>
+                      <th className="py-2 px-3 text-right">Zomato</th>
+                      <th className="py-2 px-3 text-right">Swiggy</th>
+                      <th className="py-2 px-3 text-right">Overall</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 font-mono">
+                    {[
+                      { store: 'Badlapur', region: 'MH', z: '3.82', s: '3.91', o: '3.87' },
+                      { store: 'Thiruvalla', region: 'Kerela', z: '3.88', s: '3.95', o: '3.92' },
+                      { store: 'Kolar- Highway Star', region: 'KA', z: '3.92', s: '4.02', o: '3.97' },
+                      { store: 'Guduvanchery', region: 'TN', z: '3.96', s: '4.06', o: '4.01' },
+                      { store: 'Virar', region: 'MH', z: '4.01', s: '4.10', o: '4.06' },
+                    ].map((row, i) => (
+                      <tr key={i}>
+                        <td className="py-2 px-3 font-sans text-slate-200">{row.store}</td>
+                        <td className="py-2 px-3 font-sans text-slate-400">{row.region}</td>
+                        <td className="py-2 px-3 text-right text-rose-400 font-bold">{row.z} ★</td>
+                        <td className="py-2 px-3 text-right text-rose-400 font-bold">{row.s} ★</td>
+                        <td className="py-2 px-3 text-right text-rose-500 font-bold">{row.o} ★</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 2. SALES HUB TAB */}
+      {/* ========================================================================= */}
       {activeTab === 'sales' && (
         <div className="mt-5 space-y-5">
           {/* Sub Navigation Bar */}
@@ -108,7 +217,7 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Sub View Toggle: Daily, Weekly, Monthly */}
+            {/* Sub View Toggle */}
             <div className="flex items-center gap-1 bg-[#070b14] p-1 rounded-lg border border-slate-800">
               {(['daily', 'weekly', 'monthly'] as SalesSubView[]).map((v) => (
                 <button
@@ -304,7 +413,6 @@ export default function Home() {
 
           {/* 3. AOV & DISCOUNT BUCKET ANALYSIS */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* AOV Bucket Table */}
             <div className="bg-[#0d1527] rounded-xl border border-slate-800 overflow-hidden">
               <div className="px-4 py-2.5 bg-amber-600/80 font-bold text-xs uppercase tracking-wider text-white">
                 💰 AOV BUCKET ANALYSIS (REV SHARE | ORDERS)
@@ -335,7 +443,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Discount Bucket Table */}
             <div className="bg-[#0d1527] rounded-xl border border-slate-800 overflow-hidden">
               <div className="px-4 py-2.5 bg-rose-600/80 font-bold text-xs uppercase tracking-wider text-white">
                 🏷️ DISCOUNT BUCKET ANALYSIS (REV SHARE | ORDERS)
@@ -369,7 +476,6 @@ export default function Home() {
 
           {/* 4. BRAND SUMMARY & SOURCE SUMMARY */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Brand Summary */}
             <div className="bg-[#0d1527] rounded-xl border border-slate-800 overflow-hidden">
               <div className="px-4 py-2.5 border-b border-slate-800 font-bold text-xs uppercase tracking-wider text-slate-200">
                 🏷️ BRAND SUMMARY
@@ -400,7 +506,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Source Summary */}
             <div className="bg-[#0d1527] rounded-xl border border-slate-800 overflow-hidden">
               <div className="px-4 py-2.5 border-b border-slate-800 font-bold text-xs uppercase tracking-wider text-slate-200">
                 📍 SOURCE SUMMARY
@@ -534,6 +639,87 @@ export default function Home() {
           </div>
         </div>
       )}
-    </div>
+
+      {/* ========================================================================= */}
+      {/* 3. KPT & O2D TAB */}
+      {/* ========================================================================= */}
+      {activeTab === 'kpt' && (
+        <div className="mt-5 space-y-5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-[#0d1527] p-4 rounded-xl border border-slate-800">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Avg KPT</span>
+              <p className="text-2xl font-bold text-emerald-400 mt-1">7.4 min</p>
+              <span className="text-[11px] text-slate-400">Target: &lt; 9.0 min</span>
+            </div>
+            <div className="bg-[#0d1527] p-4 rounded-xl border border-slate-800">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Avg Rider Wait</span>
+              <p className="text-2xl font-bold text-amber-400 mt-1">4.2 min</p>
+              <span className="text-[11px] text-slate-400">Target: &lt; 5.0 min</span>
+            </div>
+            <div className="bg-[#0d1527] p-4 rounded-xl border border-slate-800">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Avg O2D (Delivery)</span>
+              <p className="text-2xl font-bold text-sky-400 mt-1">26.8 min</p>
+              <span className="text-[11px] text-slate-400">Target: &lt; 30.0 min</span>
+            </div>
+            <div className="bg-[#0d1527] p-4 rounded-xl border border-slate-800">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">KPT Breaches (&gt;15 min)</span>
+              <p className="text-2xl font-bold text-rose-400 mt-1">2.4%</p>
+              <span className="text-[11px] text-emerald-400">-0.6% vs LW</span>
+            </div>
+          </div>
+
+          <div className="bg-[#0d1527] rounded-xl border border-slate-800 overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-800 font-bold text-xs uppercase tracking-wider text-purple-400 bg-[#0d1527]/80">
+              ⏱️ Outlet Speed of Service & Breach Leaderboard
+            </div>
+            <div className="overflow-x-auto max-h-96">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-[#070b14] text-slate-400 sticky top-0">
+                  <tr>
+                    <th className="py-2.5 px-4">Store Name</th>
+                    <th className="py-2.5 px-4">Region</th>
+                    <th className="py-2.5 px-4 text-right">Avg KPT</th>
+                    <th className="py-2.5 px-4 text-right">Rider Wait</th>
+                    <th className="py-2.5 px-4 text-right">O2D</th>
+                    <th className="py-2.5 px-4 text-right">Breach Rate</th>
+                    <th className="py-2.5 px-4 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 font-mono">
+                  {[
+                    { store: 'Indiranagar - CK', region: 'KA', kpt: '6.2 min', wait: '3.1 min', o2d: '23.4 min', breach: '0.8%', status: 'Excellent' },
+                    { store: 'Koramangala', region: 'KA', kpt: '6.8 min', wait: '3.5 min', o2d: '24.1 min', breach: '1.2%', status: 'Excellent' },
+                    { store: 'HSR Layout', region: 'KA', kpt: '7.1 min', wait: '4.0 min', o2d: '25.6 min', breach: '1.8%', status: 'Good' },
+                    { store: 'Whitefield', region: 'KA', kpt: '7.8 min', wait: '4.4 min', o2d: '27.2 min', breach: '2.5%', status: 'Good' },
+                    { store: 'Besant Nagar', region: 'TN', kpt: '7.9 min', wait: '4.2 min', o2d: '26.8 min', breach: '2.2%', status: 'Good' },
+                    { store: 'Khar', region: 'MH', kpt: '8.4 min', wait: '4.9 min', o2d: '28.5 min', breach: '3.1%', status: 'Average' },
+                    { store: 'Badlapur', region: 'MH', kpt: '11.8 min', wait: '7.2 min', o2d: '34.2 min', breach: '7.8%', status: 'Critical' },
+                  ].map((row, i) => (
+                    <tr key={i} className="hover:bg-slate-800/40">
+                      <td className="py-2 px-4 font-sans font-medium text-slate-200">{row.store}</td>
+                      <td className="py-2 px-4 font-sans text-slate-400">{row.region}</td>
+                      <td className="py-2 px-4 text-right text-emerald-400 font-bold">{row.kpt}</td>
+                      <td className="py-2 px-4 text-right text-amber-300">{row.wait}</td>
+                      <td className="py-2 px-4 text-right text-sky-400">{row.o2d}</td>
+                      <td className="py-2 px-4 text-right text-rose-400 font-bold">{row.breach}</td>
+                      <td className="py-2 px-4 text-center font-sans">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          row.status === 'Excellent' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' :
+                          row.status === 'Good' ? 'bg-sky-950 text-sky-400 border border-sky-800' :
+                          row.status === 'Average' ? 'bg-amber-950 text-amber-400 border border-amber-800' :
+                          'bg-rose-950 text-rose-400 border border-rose-800'
+                        }`}>
+                          {row.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
   );
 }
