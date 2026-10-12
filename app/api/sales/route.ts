@@ -131,7 +131,7 @@ export async function GET(req: NextRequest) {
   const yesterdayAov = (yesterdayNet / Math.max(1, yesterdayOrders)).toFixed(2);
   const avgDisPct = totalGross > 0 ? `-${(((totalGross - totalNet) / totalGross) * 100).toFixed(2)}%` : '-38.03%';
 
-  // DYNAMIC HEADER COLUMNS & ROWS
+  // Summary Table dynamic headers based on selected view
   let summaryHeaders: string[] = [];
   let selectedOverallKPI: any[] = [];
 
@@ -146,24 +146,24 @@ export async function GET(req: NextRequest) {
       { param: 'Discount %', c1: avgDisPct, c2: avgDisPct, c3: '-36.08%', c4: '+2.90%', c5: '-35.28%', c6: '-34.05%' },
     ];
   } else if (viewType === 'weekly') {
-    summaryHeaders = ['Parameters', 'Current Week (W-41)', 'Last Week (W-40)', 'Last 2 Week (W-39)', 'WoW Growth %', 'Same Week LY', 'LY Growth %'];
+    summaryHeaders = ['Parameters', 'Current WK (W-41)', 'Last Week (W-40)', 'Last 2 Week (W-39)', 'CWK vs LW', 'CWK vs L2W'];
     selectedOverallKPI = [
-      { param: 'Gross Sales', c1: fmtDec(totalGross * 0.65), c2: fmtDec(totalGross * 0.62), c3: fmtDec(totalGross * 0.58), c4: '+4.84%', c5: fmtDec(totalGross * 0.51), c6: '+27.45%' },
-      { param: 'Discount', c1: fmtDec(-(totalGross - totalNet) * 0.65), c2: fmtDec(-(totalGross - totalNet) * 0.61), c3: fmtDec(-(totalGross - totalNet) * 0.56), c4: '+6.55%', c5: fmtDec(-(totalGross - totalNet) * 0.49), c6: '+32.65%' },
-      { param: 'Net Sales', c1: fmtDec(totalNet * 0.65), c2: fmtDec(totalNet * 0.62), c3: fmtDec(totalNet * 0.58), c4: '+4.84%', c5: fmtDec(totalNet * 0.51), c6: '+27.45%' },
-      { param: 'Orders (Txn)', c1: fmt(totalOrders * 0.65), c2: fmt(totalOrders * 0.62), c3: fmt(totalOrders * 0.59), c4: '+4.84%', c5: fmt(totalOrders * 0.52), c6: '+25.00%' },
-      { param: 'AOV', c1: yesterdayAov, c2: '249.10', c3: '248.50', c4: '+0.24%', c5: '245.20', c6: '+1.59%' },
-      { param: 'Discount %', c1: avgDisPct, c2: '-36.17%', c3: '-36.16%', c4: '+2.43%', c5: '-35.10%', c6: '+3.15%' },
+      { param: 'Gross Sales', c1: fmtDec(totalGross * 0.65), c2: fmtDec(totalGross * 0.62), c3: fmtDec(totalGross * 0.58), c4: '+4.84%', c5: '+12.07%' },
+      { param: 'Discount', c1: fmtDec(-(totalGross - totalNet) * 0.65), c2: fmtDec(-(totalGross - totalNet) * 0.61), c3: fmtDec(-(totalGross - totalNet) * 0.56), c4: '+6.55%', c5: '+16.07%' },
+      { param: 'Net Sales', c1: fmtDec(totalNet * 0.65), c2: fmtDec(totalNet * 0.62), c3: fmtDec(totalNet * 0.58), c4: '+4.84%', c5: '+12.07%' },
+      { param: 'Orders (Txn)', c1: fmt(totalOrders * 0.65), c2: fmt(totalOrders * 0.62), c3: fmt(totalOrders * 0.59), c4: '+4.84%', c5: '+10.17%' },
+      { param: 'AOV', c1: yesterdayAov, c2: '249.10', c3: '248.50', c4: '+0.24%', c5: '+0.48%' },
+      { param: 'Discount %', c1: avgDisPct, c2: '-36.17%', c3: '-36.16%', c4: '+2.43%', c5: '+2.46%' },
     ];
   } else {
-    summaryHeaders = ['Parameters', `${selectedMonth} MTD`, 'Sep-26 (Full)', 'Aug-26 (Full)', 'MoM Growth %', 'Jul-26 (Full)', 'LY MoM %'];
+    summaryHeaders = ['Parameters', `${selectedMonth} MTD`, 'Sep-26 (Full)', 'Aug-26 (Full)', 'Jul-26 (Full)', 'MoM GW%'];
     selectedOverallKPI = [
-      { param: 'Gross Sales', c1: fmtDec(totalGross), c2: '7,93,74,000.00', c3: '7,45,32,186.00', c4: '+6.47%', c5: '6,84,20,388.00', c6: '+15.98%' },
-      { param: 'Discount', c1: fmtDec(-(totalGross - totalNet)), c2: '-2,80,00,500.00', c3: '-2,62,08,468.00', c4: '+6.87%', c5: '-2,32,96,416.00', c6: '+20.21%' },
-      { param: 'Net Sales', c1: fmtDec(totalNet), c2: '5,13,73,500.00', c3: '4,83,93,837.00', c4: '+6.18%', c5: '4,46,43,571.00', c6: '+15.08%' },
-      { param: 'Orders (Txn)', c1: fmt(totalOrders), c2: '2,05,200', c3: '1,94,530', c4: '+5.46%', c5: '1,77,293', c6: '+15.74%' },
-      { param: 'AOV', c1: (totalNet / Math.max(1, totalOrders)).toFixed(2), c2: '250.36', c3: '248.80', c4: '+0.69%', c5: '251.80', c6: '-0.57%' },
-      { param: 'Discount %', c1: avgDisPct, c2: '-35.28%', c3: '-35.16%', c4: '-0.26%', c5: '-34.05%', c6: '+3.61%' },
+      { param: 'Gross Sales', c1: fmtDec(totalGross), c2: '7,93,74,000.00', c3: '7,45,32,186.00', c4: '6,84,20,388.00', c5: '+6.47%' },
+      { param: 'Discount', c1: fmtDec(-(totalGross - totalNet)), c2: '-2,80,00,500.00', c3: '-2,62,08,468.00', c4: '-2,32,96,416.00', c5: '+6.87%' },
+      { param: 'Net Sales', c1: fmtDec(totalNet), c2: '5,13,73,500.00', c3: '4,83,93,837.00', c4: '4,46,43,571.00', c5: '+6.18%' },
+      { param: 'Orders (Txn)', c1: fmt(totalOrders), c2: '2,05,200', c3: '1,94,530', c4: '1,77,293', c5: '+5.46%' },
+      { param: 'AOV', c1: (totalNet / Math.max(1, totalOrders)).toFixed(2), c2: '250.36', c3: '248.80', c4: '251.80', c5: '+0.69%' },
+      { param: 'Discount %', c1: avgDisPct, c2: '-35.28%', c3: '-35.16%', c4: '-34.05%', c5: '-0.26%' },
     ];
   }
 
@@ -214,18 +214,18 @@ export async function GET(req: NextRequest) {
       { bucket: '90%-100%', col1: '0.0% | 0', col2: '0.0% | 0', col3: '0.0% | 0', col4: '0.1% | 5' },
     ],
     brandSummary: [
-      { brand: 'Frozen Bottle', todayRev: fmtDec(yesterdayNet * 0.823), lwRev: fmtDec(yesterdayNet * 0.77), growth: '+6.88%', todayDis: '-38.86%', lwDis: '-33.95%', disChange: '-4.91%' },
-      { brand: 'Madno', todayRev: fmtDec(yesterdayNet * 0.131), lwRev: fmtDec(yesterdayNet * 0.125), growth: '+4.80%', todayDis: '-36.72%', lwDis: '-35.07%', disChange: '-1.65%' },
-      { brand: 'Lubov', todayRev: fmtDec(yesterdayNet * 0.025), lwRev: fmtDec(yesterdayNet * 0.015), growth: '+66.67%', todayDis: '-9.20%', lwDis: '-22.00%', disChange: '+12.81%' },
-      { brand: 'Boba Bar', todayRev: fmtDec(yesterdayNet * 0.021), lwRev: fmtDec(yesterdayNet * 0.019), growth: '+10.53%', todayDis: '-37.66%', lwDis: '-37.46%', disChange: '-0.20%' },
+      { brand: 'Frozen Bottle', todayRev: fmtDec(yesterdayNet * 0.823), lwRev: fmtDec(yesterdayNet * 0.77), growth: '+6.88%', todayDis: '-38.86%' },
+      { brand: 'Madno', todayRev: fmtDec(yesterdayNet * 0.131), lwRev: fmtDec(yesterdayNet * 0.125), growth: '+4.80%', todayDis: '-36.72%' },
+      { brand: 'Lubov', todayRev: fmtDec(yesterdayNet * 0.025), lwRev: fmtDec(yesterdayNet * 0.015), growth: '+66.67%', todayDis: '-9.20%' },
+      { brand: 'Boba Bar', todayRev: fmtDec(yesterdayNet * 0.021), lwRev: fmtDec(yesterdayNet * 0.019), growth: '+10.53%', todayDis: '-37.66%' },
     ],
     sourceSummary: [
-      { source: 'In Store', todayRev: fmtDec(yesterdayNet * 0.249), lwRev: fmtDec(yesterdayNet * 0.22), growth: '+13.18%', todayDis: '-35.11%', lwDis: '-4.75%', disChange: '-30.36%' },
-      { source: 'Swiggy', todayRev: fmtDec(yesterdayNet * 0.430), lwRev: fmtDec(yesterdayNet * 0.44), growth: '-2.27%', todayDis: '-38.59%', lwDis: '-37.58%', disChange: '-1.01%' },
-      { source: 'Zomato', todayRev: fmtDec(yesterdayNet * 0.304), lwRev: fmtDec(yesterdayNet * 0.32), growth: '-5.00%', todayDis: '-39.12%', lwDis: '-38.22%', disChange: '-0.90%' },
-      { source: 'Ownly', todayRev: fmtDec(yesterdayNet * 0.015), lwRev: fmtDec(yesterdayNet * 0.014), growth: '+7.14%', todayDis: '-3.25%', lwDis: '0.00%', disChange: '-3.25%' },
-      { source: 'Magicpin', todayRev: fmtDec(yesterdayNet * 0.001), lwRev: fmtDec(yesterdayNet * 0.0005), growth: '+100.00%', todayDis: '-47.54%', lwDis: '-51.31%', disChange: '+3.77%' },
-      { source: 'Website', todayRev: fmtDec(yesterdayNet * 0.001), lwRev: fmtDec(yesterdayNet * 0.0005), growth: '+100.00%', todayDis: '0.00%', lwDis: '0.00%', disChange: '0.00%' },
+      { source: 'In Store', todayRev: fmtDec(yesterdayNet * 0.249), lwRev: fmtDec(yesterdayNet * 0.22), growth: '+13.18%', todayDis: '-35.11%' },
+      { source: 'Swiggy', todayRev: fmtDec(yesterdayNet * 0.430), lwRev: fmtDec(yesterdayNet * 0.44), growth: '-2.27%', todayDis: '-38.59%' },
+      { source: 'Zomato', todayRev: fmtDec(yesterdayNet * 0.304), lwRev: fmtDec(yesterdayNet * 0.32), growth: '-5.00%', todayDis: '-39.12%' },
+      { source: 'Ownly', todayRev: fmtDec(yesterdayNet * 0.015), lwRev: fmtDec(yesterdayNet * 0.014), growth: '+7.14%', todayDis: '-3.25%' },
+      { source: 'Magicpin', todayRev: fmtDec(yesterdayNet * 0.001), lwRev: fmtDec(yesterdayNet * 0.0005), growth: '+100.00%', todayDis: '-47.54%' },
+      { source: 'Website', todayRev: fmtDec(yesterdayNet * 0.001), lwRev: fmtDec(yesterdayNet * 0.0005), growth: '+100.00%', todayDis: '0.00%' },
     ],
     brandSession: [
       { brand: 'Frozen Bottle', breakfast: fmtDec(yesterdayNet * 0.025), lunch: fmtDec(yesterdayNet * 0.174), snacks: fmtDec(yesterdayNet * 0.187), dinner: fmtDec(yesterdayNet * 0.354), postDinner: fmtDec(yesterdayNet * 0.083) },
@@ -239,6 +239,8 @@ export async function GET(req: NextRequest) {
       { region: 'TN', breakfast: fmtDec(yesterdayNet * 0.011), lunch: fmtDec(yesterdayNet * 0.058), snacks: fmtDec(yesterdayNet * 0.062), dinner: fmtDec(yesterdayNet * 0.110), postDinner: fmtDec(yesterdayNet * 0.025) },
       { region: 'Kerela', breakfast: fmtDec(yesterdayNet * 0.002), lunch: fmtDec(yesterdayNet * 0.009), snacks: fmtDec(yesterdayNet * 0.008), dinner: fmtDec(yesterdayNet * 0.015), postDinner: fmtDec(yesterdayNet * 0.033) },
     ],
+    topStores: allStores.slice(0, 10),
+    bottomStores: allStores.slice(-10).reverse(),
     allStores,
   });
 }
