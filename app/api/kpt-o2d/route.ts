@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Disable edge caching to ensure live Rista / GSheet sync
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const brand = (searchParams.get('brand') || 'ALL').trim();
   const region = (searchParams.get('region') || 'ALL').trim();
   const platform = (searchParams.get('platform') || 'Swiggy').toLowerCase();
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const platform = searchParams.get('platform') || 'Swiggy';
+  const region = searchParams.get('region') || 'ALL';
+  const brand = searchParams.get('brand') || 'ALL';
 
   const isZomato = platform === 'zomato';
   const kptOffset = isZomato ? 0.75 : 0.0;
