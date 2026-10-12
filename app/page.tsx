@@ -21,12 +21,12 @@ export default function Home() {
   const [opsLoading, setOpsLoading] = useState(false);
 
   // Sales Hub State
+const [salesSubView, setSalesSubView] = useState<SalesSubView>('daily');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [salesBrand, setSalesBrand] = useState('ALL');
   const [salesRegion, setSalesRegion] = useState('ALL');
   const [salesSource, setSalesSource] = useState('ALL');
   const [salesSession, setSalesSession] = useState('ALL');
-  const [salesData, setSalesData] = useState<any>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Outlet Table Filter State
   const [outletRegion, setOutletRegion] = useState('ALL');
