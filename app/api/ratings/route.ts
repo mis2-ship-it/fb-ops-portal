@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
+// 1. Force dynamic execution on every request (prevents Vercel stale caching)
 export const dynamic = 'force-dynamic';
-export const revalidate = 60;
+export const revalidate = 0;
 
 const GOOGLE_CSV = "https://docs.google.com/spreadsheets/d/1HlYNDNXig3PCjIFpQdI8B1lEzubsttUEPj_57DgpJoE/gviz/tq?tqx=out:csv&sheet=Complaints";
 const SWIGGY_CSV = "https://docs.google.com/spreadsheets/d/1R5kdiLGiNV2zSxs2hyObxUF216iqeaDVTggM7mub0Ck/gviz/tq?tqx=out:csv&sheet=Raw%20Data";
@@ -77,6 +78,13 @@ export async function GET(req: Request) {
   const brandFilter = searchParams.get('brand') || 'ALL';
   const regionFilter = searchParams.get('region') || 'ALL';
   const storeFilter = searchParams.get('store') || 'ALL';
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const platform = (searchParams.get('platform') || 'google').toLowerCase();
+  const brand = (searchParams.get('brand') || 'ALL').trim();
+  const region = (searchParams.get('region') || 'ALL').trim();
+  const store = (searchParams.get('store') || 'ALL').trim();
 
   let targetUrl = ZOMATO_CSV;
   if (platform === 'swiggy') targetUrl = SWIGGY_CSV;
