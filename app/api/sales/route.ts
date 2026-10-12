@@ -76,11 +76,9 @@ export async function GET(req: NextRequest) {
     const [dayRes, storeRes, bRes, sRes] = await Promise.all([
       fetch(dayUrl, { cache: 'no-store' }),
       fetch(storeUrl, { cache: 'no-store' }),
-      fetch(bUrlSafe(brandUrl), { cache: 'no-store' }),
+      fetch(brandUrl, { cache: 'no-store' }),
       fetch(srcUrl, { cache: 'no-store' }),
     ]);
-
-    function bUrlSafe(u: string) { return u; }
 
     // Parse Day-level Data
     if (dayRes.ok) {
